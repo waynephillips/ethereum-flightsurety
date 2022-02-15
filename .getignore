@@ -1,0 +1,5 @@
+# Dependency directories
+node_modules/
+build/
+# ignore secret file with seed
+.secret
