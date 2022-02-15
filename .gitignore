@@ -1,5 +1,6 @@
 # Dependency directories
 node_modules/
 build/
+package-lock.json
 # ignore secret file with seed
 .secret
