@@ -36,7 +36,6 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
-
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -143,6 +142,8 @@ contract FlightSuretyApp {
                                 pure
     {
             // react to flight status = 20 and find passengers who purchased insurance
+            // triggered by the oracle when a status is return
+            // TODO - put in a require statement, look for passengers that have purchased insurance and start process to determine how much they should be paid
     }
 
 
