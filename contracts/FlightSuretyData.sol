@@ -12,14 +12,9 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    struct passenger {}
-    struct airline {}
-    struct flight {}
 
-    mapping(address => passenger) private passengers;
-    mapping(address => airline) private airlines;
-    mapping(uint8 -> flight) private flights;
 
+    mapping(address => uint256) private authorizedContracts;            // list of authorized contracts that can call this data contract
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -64,6 +59,12 @@ contract FlightSuretyData {
         _;
     }
 
+    // need to ensure that the calling contract is authorized
+    modifier requireIsCallerAuthorized()
+    {
+        require(authorizedContracts[msg.sender] == 1, "Caller is not contract owner");
+        _;
+    }
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -97,6 +98,27 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+    // authorize the calling contract(s) to restrict data contract callers
+    function authorizeContract
+                            (
+                                address contractAddress
+                            )
+                            external
+                            requireContractOwner
+    {
+        authorizedContracts[contractAddress] = 1;
+    }
+
+    // deauthorize the calling contract
+    function deauthorizeContract
+                            (
+                                address contractAddress
+                            )
+                            external
+                            requireContractOwner
+    {
+        delete authorizedContracts[contractAddress];
+    }
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/

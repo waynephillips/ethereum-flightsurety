@@ -26,6 +26,7 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;          // Account used to deploy contract
+    FlightSuretyData public flightSuretyData;      // reference to data contract
 
     struct Flight {
         bool isRegistered;
@@ -74,10 +75,12 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                  address dataContract
                                 )
                                 public
     {
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(dataContract); // define reference to the data contract - flightsuretydata
     }
 
     /********************************************************************************************/
@@ -336,4 +339,13 @@ contract FlightSuretyApp {
 
 // endregion
 
+// define reference to data contract
+  contract FlightSuretyData {
+    // TODO: Add interfaces from FlightSuretyData
+    function registerAirline() external {}
+    function buy() external {}
+    function creditInsurees() external {}
+    function pay() external {}
+    function fund() public {}
+  }
 }
