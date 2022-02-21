@@ -24,6 +24,7 @@ contract FlightSuretyData {
       bool isRegistered;
       address wallet;
     }
+    mapping(address => Airline) airlines;     // store registered airlines
     mapping(address => uint256) private authorizedContracts;            // list of authorized contracts that can call this data contract
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -129,6 +130,17 @@ contract FlightSuretyData {
     {
         delete authorizedContracts[contractAddress];
     }
+    function isAirlineRegistered
+        (
+          address account
+        )
+        external
+        view
+        returns(bool)
+    {
+      require(account != address(0),"'airline' must be a valid address");
+      return airlines[account].isRegistered;
+    }
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -140,11 +152,17 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
+                              address account
                             )
                             external
                             pure
     {
         // remove pure once code is written
+        require(!airlines[account].isRegistered,"Airlines is already registered.");
+        airlines[account] = Airline({
+            isRegistered: true,
+            wallet: account
+        });
     }
 
 
