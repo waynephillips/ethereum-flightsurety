@@ -10,19 +10,33 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    uint constant AIRLINE_FUND_AMOUNT = 10;
+    uint constant INSURANCE_FUND_AMOUNT = 1;
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-
+    uint constant M = 3;   // min number of multi-party voters
+    uint private numVoted = 0;
+    address[] multiCalls = new address[](0);  // all of the addresses that have called the multi-party consensus function
     struct Passenger {
         bool purchasedInsurance;
         address wallet;
+        uint256 insurancePaid;
         uint256 insurancePayout;
     }
-    mapping(address => Passenger) private passengers;
+    mapping(bytes32 => Passenger[]) private passengers;
 
+    struct UserProfile {
+      bool isRegistered;
+      bool isAdmin;
+    }
+    mapping(address => UserProfile) userProfiles;
     struct Airline {
       bool isRegistered;
+      uint numVotes;
+      bool hasFunds;
+      string name;
       address wallet;
+      uint256 funds;
     }
     mapping(address => Airline) airlines;     // store registered airlines
     mapping(address => uint256) private authorizedContracts;            // list of authorized contracts that can call this data contract
@@ -37,10 +51,18 @@ contract FlightSuretyData {
     */
     constructor
                                 (
+                                  string airlinename
                                 )
                                 public
     {
         contractOwner = msg.sender;
+        // register the first airline
+        airlines[msg.sender] = Airline({name: airlinename,
+                      isRegistered:true,
+                      hasFunds: false,
+                      numVotes: 0,
+                      wallet: msg.sender});
+
     }
 
     /********************************************************************************************/
@@ -79,6 +101,22 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
+    /**
+    * @dev Check if a user is registered
+    *
+    * @return A bool that indicates if the user is registered
+    */
+    function isUserRegistered
+                            (
+                                address account
+                            )
+                            external
+                            view
+                            returns(bool)
+    {
+        require(account != address(0), "'account' must be a valid address.");
+        return userProfiles[account].isRegistered;
+    }
 
     /**
     * @dev Get operating status of contract
@@ -93,6 +131,22 @@ contract FlightSuretyData {
         return operational;
     }
 
+    function registerUser
+                                (
+                                    address account,
+                                    bool isAdmin
+                                )
+                                external
+                                requireIsOperational
+                                requireContractOwner
+    {
+        require(!userProfiles[account].isRegistered, "User is already registered.");
+
+        userProfiles[account] = UserProfile({
+                                                isRegistered: true,
+                                                isAdmin: isAdmin
+                                            });
+    }
 
     /**
     * @dev Sets contract operations on/off
@@ -106,7 +160,21 @@ contract FlightSuretyData {
                             external
                             requireContractOwner
     {
-        operational = mode;
+        require(mode != operational,"New mode must be different from existing mode");
+        require(userProfiles[msg.sender].isAdmin,"Caller is not an admin");
+        bool isDuplicate = false;
+        for (uint c=0; c=multiCalls.length; c++) {
+          if (multiCalls[c] == msg.sender) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        require(!isDuplicate,"Caller has already called this function");
+        multiCalls.push(msg.sender);
+        if (multiCalls.length >= M) {
+          operational = mode;
+          multiCalls = new address[](0);
+        }
     }
 
     // authorize the calling contract(s) to restrict data contract callers
@@ -159,10 +227,17 @@ contract FlightSuretyData {
     {
         // remove pure once code is written
         require(!airlines[account].isRegistered,"Airlines is already registered.");
-        airlines[account] = Airline({
+        if (airlines.length < M) {
+          airlines[account] = Airline({
             isRegistered: true,
             wallet: account
-        });
+          });
+        } else {
+            airlines[account].numVotes++;
+            if (airlines[account].numVotes >= M) {
+              airlines[account].isRegistered = true;
+            }
+        }
     }
 
 
@@ -172,10 +247,21 @@ contract FlightSuretyData {
     */
     function buy
                             (
+                              address airline,
+                              string memory flight,
+                              uint256 timestamp
                             )
                             external
                             payable
     {
+      require(msg.value == INSURANCE_FUND_AMOUNT, "Insufficient funds to purchase flight insurance");
+      require(msg.sender == tx.origin, "Unauthorized Contract");
+      bytes32 flightkey = getFlightKey(airline,flight,timestamp);
+      passengers[flightkey].push(Passenger({purchasedInsurance:true,
+                  wallet: msg.sender,
+                  insurancePaid: msg.value,
+                  insurancePayout: 0}));
+
 
     }
 
@@ -197,10 +283,13 @@ contract FlightSuretyData {
     */
     function pay
                             (
+                              address account
                             )
                             external
-                            pure
+                            payable
     {
+
+      payable(account).transfer(msg.value);
     }
 
    /**
@@ -210,10 +299,18 @@ contract FlightSuretyData {
     */
     function fund
                             (
+                              address airline
                             )
                             public
                             payable
     {
+      airlines[airline].funds.add(msg.value);
+      // when airline has the required funds to Vote, set hasFunds to true
+      if (airlines[airline].funds >= AIRLINE_FUND_AMOUNT) {
+        airlines[airline].hasFunds = true;
+      } else {
+        airlines[airline].hasFunds = false;
+      }
     }
 
     function getFlightKey
