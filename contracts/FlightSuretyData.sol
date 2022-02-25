@@ -10,8 +10,8 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    uint constant AIRLINE_FUND_AMOUNT = 10;
-    uint constant INSURANCE_FUND_AMOUNT = 1;
+    uint256 private constant AIRLINE_FUND_AMOUNT = 10 ether;
+    uint256 private constant INSURANCE_FUND_AMOUNT = 1 ether;
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint constant M = 3;   // min number of multi-party voters

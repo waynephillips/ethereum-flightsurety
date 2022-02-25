@@ -91,7 +91,7 @@ contract FlightSuretyApp {
                             pure
                             returns(bool)
     {
-        return true;  // Modify to call data contract's status
+        return FlightSuretyData.isOperational;  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -124,7 +124,7 @@ contract FlightSuretyApp {
                                 external
                                 pure
     {
-
+        FlightSuretyData.registerFlight();
     }
 
    /**
@@ -144,6 +144,14 @@ contract FlightSuretyApp {
             // react to flight status = 20 and find passengers who purchased insurance
             // triggered by the oracle when a status is return
             // TODO - put in a require statement, look for passengers that have purchased insurance and start process to determine how much they should be paid
+/*
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+
+        flightSuretyData.updateFlight(airline, flight, timestamp, statusCode);
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            flightSuretyData.creditInsurees(flightKey);
+        }
+  */
     }
 
 

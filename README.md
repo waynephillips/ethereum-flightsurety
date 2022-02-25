@@ -18,6 +18,8 @@ To run truffle tests:
 `truffle test ./test/flightSurety.js`
 `truffle test ./test/oracles.js`
 
+note: requirements for project are verified by running the truffle tests. Dapp will showcase the basic functioality and data, but will not fully demonstrate all of the functionality of the 2 contracts.
+
 To use the dapp:
 
 `truffle migrate`
