@@ -18,7 +18,7 @@ contract FlightSuretyData {
     uint private numVoted = 0;
     uint airlinesCount = 0;
     address[] multiCalls = new address[](0);          // all of the addresses that have called the multi-party consensus function
-    address[] multiAirlineCalls = new address[](0);   // all of the airlines that have called the multi-party consensus, vote function
+   // address[] multiAirlineCalls = new address[](0);   // all of the airlines that have called the multi-party consensus, vote function
     struct Passenger {
         bool purchasedInsurance;
         address wallet;
@@ -26,7 +26,7 @@ contract FlightSuretyData {
         uint256 insurancePayout;
         bool insurancePayoutComplete;
     }
-    mapping(bytes32 => Passenger[]) private passengers;
+    mapping(address => Passenger) private passengers;
     mapping(bytes32 => address []) public passengersWhoBoughtInsurance;   // track those passengers who purchasesed insurance for the flight
     mapping(address => uint256) private insurancePayout;                  // track insurance payout amount by passenger
     mapping(bytes32 => uint256[]) private amountInsuredForFlight;
@@ -171,6 +171,8 @@ contract FlightSuretyData {
     {
         require(mode != operational,"New mode must be different from existing mode");
         require(userProfiles[msg.sender].isAdmin,"Caller is not an admin");
+        operational = mode;
+        /*
         bool isDuplicate = false;
         for (uint c=0; c=multiCalls.length; c++) {
           if (multiCalls[c] == msg.sender) {
@@ -184,6 +186,7 @@ contract FlightSuretyData {
           operational = mode;
           multiCalls = new address[](0);
         }
+        */
     }
 
     // authorize the calling contract(s) to restrict data contract callers
@@ -238,21 +241,22 @@ contract FlightSuretyData {
     {
         require(!airlines[airline].isRegistered,"Airline is already registered.");
         if (airlinesCount < M) {
-          airlines[airline] = Airline({isRegistered: true,hasFunds: false,numVotes: 1,funds: 0,name: airlinename,  wallet: airline});
+          airlines[airline] = Airline({isRegistered: true,hasFunds: false, hasVoted:false, numVotes: 1,funds: 0,name: airlinename,  wallet: airline});
           registeredAirlines.push(airline);
+
           airlinesCount++;
         } else {
             if (!hasVoted[msg.sender]) {
                 numVoted++;
             } else {
                 // need at least 50% consensus
-                if (numVotes >= registeredAirlines.length.div(2)) {
+                if (numVoted >= registeredAirlines.length.div(2)) {
                   // reset the voting
                   for (uint i = 0; i < registeredAirlines.length; i++) {
                     hasVoted[registeredAirlines[i]] = false;
                   }
                   numVoted = 0;
-                  airlines[airline] = Airline({isRegistered: true,hasFunds: false,numVotes: 1,funds: 0,name: airlinename,  wallet: account});
+                  airlines[airline] = Airline({isRegistered: true,hasFunds: false, hasVoted:false, numVotes: 1,funds: 0,name: airlinename,  wallet: airline});
                   registeredAirlines.push(airline);
                   airlinesCount++;
                 }
@@ -268,7 +272,7 @@ contract FlightSuretyData {
     function buy
                             (
                               address airline,
-                              string memory flight,
+                              string flightCode,
                               uint256 timestamp
                             )
                             requireIsOperational
@@ -277,12 +281,13 @@ contract FlightSuretyData {
     {
       require(msg.value >= INSURANCE_FUND_AMOUNT, "Insufficient funds to purchase flight insurance");
       require(msg.sender == tx.origin, "Unauthorized Contract");
-      bytes32 flightkey = getFlightKey(airline,flight,timestamp);
+      bytes32 flightkey = getFlightKey(airline,flightCode,timestamp);
       // track passengers who bought insurance
-      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: 0, wallet: msg.sender, insurancePayoutComplete: false});
-      passengersWhoBoughtInsurance[flightKey].push(msg.sender);
+      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: 0,insurancePayout: 0, wallet: msg.sender, insurancePayoutComplete: false});
+
+      passengersWhoBoughtInsurance[flightkey].push(msg.sender);
       // track amount of insurance purchased for the flight
-      amountInsuredForFlight[flightKey].push(msg.value);
+      amountInsuredForFlight[flightkey].push(msg.value);
     }
 
     /**
@@ -290,14 +295,11 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
-                                  address airline,
-                                  string flight,
-                                  uint256 timestamp
+                                  bytes32 flightKey
                                 )
                                 external
                                 requireIsOperational
     {
-      bytes32 flightKey = getFlightkey(airline, flight, timestamp);
       address passengerWallet;
       uint256 insuranceToBePaid;
 
@@ -305,8 +307,8 @@ contract FlightSuretyData {
         passengerWallet = passengersWhoBoughtInsurance[flightKey][i];
         insuranceToBePaid = amountInsuredForFlight[flightKey][i].mul(50);   // credit insuree 1.5x amount they paid for insurance.
         delete passengersWhoBoughtInsurance[flightKey][i];                  // remove passenger from the array so that they can withdraw again.
-        amountInsuredForFlight[flightKey].sub(insuranceToBePaid);
-        passengers[passengerWallet].insurancePayout.add(insuranceToBePaid);   // add payout to the passengers balance
+        amountInsuredForFlight[flightKey][i].sub(insuranceToBePaid);
+        passengers[passengerWallet].insurancePayout = insuranceToBePaid;   // add payout to the passengers balance
         passengers[passengerWallet].insurancePayoutComplete = true;
       }
     }
