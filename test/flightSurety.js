@@ -1,7 +1,7 @@
 
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
-
+var Web3 = require('web3');
 contract('Flight Surety Tests', async (accounts) => {
 
   var config;
@@ -94,22 +94,20 @@ contract('Flight Surety Tests', async (accounts) => {
     //TODO:
      // ARRANGE
     // Register and Fund two airlines
-    await config.flightSuretyData.fund({from: accounts[0],value: web3.utils.toWei('10', "ether")});
 
-    await config.flightSuretyApp.registerAirline(accounts[1], "wayneair 2",{from: accounts[0]});
-    await config.flightSuretyApp.registerAirline(accounts[2], "wayneair 3",{from: accounts[0]});
-    await config.flightSuretyApp.registerAirline(accounts[3], "wayneair 4",{from: accounts[0]});
-    await config.flightSuretyData.fund({from: accounts[1],value: web3.utils.toWei('10', "ether")});
-    await config.flightSuretyData.fund({from: accounts[2],value: web3.utils.toWei('10', "ether")});
-    await config.flightSuretyData.fund({from: accounts[3],value: web3.utils.toWei('10', "ether")});
+    await config.flightSuretyData.fund(accounts[2], {from: accounts[0],value: web3.utils.toWei('10', "ether")});
+    await config.flightSuretyApp.registerAirline(accounts[3], "wayneair 2",{from: config.firstAirline});
+    await config.flightSuretyApp.registerAirline(accounts[4], "wayneair 3",{from: config.firstAirline});
+    await config.flightSuretyApp.registerAirline(accounts[5], "wayneair 4",{from: config.firstAirline});
+    await config.flightSuretyData.fund(accounts[3],{from: accounts[3],value: web3.utils.toWei('10', "ether")});
+    await config.flightSuretyData.fund(accounts[4],{from: accounts[4],value: web3.utils.toWei('10', "ether")});
+    await config.flightSuretyData.fund(accounts[5],{from: accounts[5],value: web3.utils.toWei('10', "ether")});
     // ACT
-    try {
-        await config.flightSuretyApp.registerAirline(accounts[4], "wayneair 5",{from:  accounts[1]});
-    }
-    catch(e) {
+    await config.flightSuretyApp.registerAirline(accounts[6], "wayneair 5",{from:  accounts[1]});
 
-    }
-    let result = await config.flightSuretyApp.isRegistered.call(accounts[4]);
+
+    let result = await config.flightSuretyData.isAirlineRegistered.call(accounts[6]);
+    //let result = await config.flightSuretyData.isAirline.call(newAirline);
 
     // ASSERT
     assert.equal(result, true, "only existing and funded airline can register another airline.");
@@ -119,28 +117,30 @@ contract('Flight Surety Tests', async (accounts) => {
     //TODO:
     // ARRANGE
     // Register and Fund two airlines
-    await config.flightSuretyData.fund({from: accounts[4],value: web3.utils.toWei('10', "ether")});
+    await config.flightSuretyData.fund(accounts[4],{from: accounts[4],value: web3.utils.toWei('10', "ether")});
 
     // ACT
     try {
-        let reg_result = await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 6",{from:  accounts[0]});
+        let reg_result = await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 6",{from:  accounts[4]});
     }
     catch(e) {
+      console.log(e);
     }
 
-    let result = await config.flightSuretyApp.isRegistered.call(accounts[7]);
+    let result = await config.flightSuretyApp.isAirlineRegistered.call(accounts[7]);
+
 
     // ASSERT
     assert.equal(result, false, "airline cannot be registered until it is approved by 50% consensus.");
 
     try {
         await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 7",{from:  accounts[1]});
-        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 8",{from:  accounts[3]});
-        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 9",{from:  accounts[4]});
+        await config.flightSuretyApp.registerAirline(accounts[8], "wayneair 8",{from:  accounts[3]});
+        await config.flightSuretyApp.registerAirline(accounts[9], "wayneair 9",{from:  accounts[4]});
     }
     catch(e) {
     }
-    result = await config.flightSuretyApp.isRegistered.call(accounts[7]);
+    result = await config.flightSuretyData.isAirlineRegistered.call(accounts[7]);
 
     // ASSERT
     assert.equal(result, true, "airline is now registered because 50% consensus has been reached.");
