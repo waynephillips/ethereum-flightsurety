@@ -14,17 +14,25 @@ contract FlightSuretyData {
     uint256 private constant INSURANCE_FUND_AMOUNT = 1 ether;
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    uint constant M = 3;   // min number of multi-party voters
+    uint constant M = 4;   // min number of multi-party voters
     uint private numVoted = 0;
+    uint airlinesVoted = 0;
     address[] multiCalls = new address[](0);  // all of the addresses that have called the multi-party consensus function
+    address[] multiAirlineCalls = new address[](0);  // all of the airlines that have called the multi-party consensus, vote function
     struct Passenger {
         bool purchasedInsurance;
         address wallet;
         uint256 insurancePaid;
         uint256 insurancePayout;
+        address flightInsurance; // flight passenger purchased insurance for
+        mapping(string => uint256) flightInsuranceBought;
     }
     mapping(bytes32 => Passenger[]) private passengers;
-
+    // address[] public passengersWhoBoughtInsurance;
+    mapping(bytes32 => address []) public passengersWhoBoughtInsurance;
+    mapping(address => uint256) private insurancePayout;   // track insurance payout amount by passenger
+     mapping(bytes32 => address[]) private passengersByFlight;  // track those passengers who purchasesed insurance for the flight
+    mapping(bytes32 => uint256[]) private amountInsured;
     struct UserProfile {
       bool isRegistered;
       bool isAdmin;
@@ -56,13 +64,17 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
+        airlinesVoted = 0;
+        authorizedContracts[msg.sender] = 1;
+
         // register the first airline
         airlines[msg.sender] = Airline({name: airlinename,
                       isRegistered:true,
                       hasFunds: false,
                       numVotes: 0,
+                      funds: 0,
+                      name: "Wayne-Udacity-Airline",
                       wallet: msg.sender});
-
     }
 
     /********************************************************************************************/
@@ -91,7 +103,6 @@ contract FlightSuretyData {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
-
     // need to ensure that the calling contract is authorized
     modifier requireIsCallerAuthorized()
     {
@@ -223,18 +234,23 @@ contract FlightSuretyData {
                               address account
                             )
                             external
-                            pure
+                            requireIsOperational
+                            requireIsCallerAuthorized
     {
-        // remove pure once code is written
-        require(!airlines[account].isRegistered,"Airlines is already registered.");
+        require(!airlines[account].isRegistered,"Airline is already registered.");
         if (airlines.length < M) {
           airlines[account] = Airline({
             isRegistered: true,
+            hasFunds: false,
+            numVotes: 1,
+            funds: 0,
+            name: "Wayne-Udacity-Airline" + block.timestamp,   // set default airline name by appending timestamp
             wallet: account
           });
         } else {
             airlines[account].numVotes++;
-            if (airlines[account].numVotes >= M) {
+            // need at least 50% consensus
+            if (airlines[account].numVotes >= airlines.length.div(2)) {
               airlines[account].isRegistered = true;
             }
         }
@@ -254,15 +270,23 @@ contract FlightSuretyData {
                             external
                             payable
     {
-      require(msg.value == INSURANCE_FUND_AMOUNT, "Insufficient funds to purchase flight insurance");
+      require(msg.value >= INSURANCE_FUND_AMOUNT, "Insufficient funds to purchase flight insurance");
       require(msg.sender == tx.origin, "Unauthorized Contract");
       bytes32 flightkey = getFlightKey(airline,flight,timestamp);
       passengers[flightkey].push(Passenger({purchasedInsurance:true,
                   wallet: msg.sender,
                   insurancePaid: msg.value,
+                  flightInsurance: flight,
                   insurancePayout: 0}));
+      // track passengers who bought insurance
+      passengersWhoBoughtInsurance[flightKey].push(msg.sender);
+      msg.sender.transfer(msg.value.sub(INSURANCE_FUND_AMOUNT));
+      /*
+       insurance_purchases[passenger][flight_key] = msg.value;
+        flight_purchasees[flight_key].push(passenger);
 
-
+        https://github.com/yarode/FlightSurety/blob/master/contracts/FlightSuretyData.sol
+        */
     }
 
     /**
@@ -270,10 +294,21 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                  address airline,
+                                  string flight,
+                                  uint256 timestamp
                                 )
                                 external
-                                pure
+                                requireIsOperational
     {
+      //TODO:
+      bytes32 flightKey = getFlightkey(airline, flight, timestamp);
+      address passengerWallet;
+      for (uint i = 0; i < passengersWhoBoughtInsurance[flightKey].length; i++) {
+        passengerWallet = passengersWhoBoughtInsurance[flightKey][i];
+        // credit the passenger
+        // passengersOwedInsuranceCredit[passengerWallet] = passengersOwedInsuranceCredit[passengerWallet] + insurance_purchases[passenger][flightKey] *3/2;
+      }
     }
 
 
@@ -288,8 +323,10 @@ contract FlightSuretyData {
                             external
                             payable
     {
-
-      payable(account).transfer(msg.value);
+      //TODO:
+      // uint256 = payoutAmount = insureeBalance[address]
+      // insureeBalance[address] = 0;
+      account.transfer(payoutAmount);
     }
 
    /**

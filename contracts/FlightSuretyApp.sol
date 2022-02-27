@@ -79,7 +79,8 @@ contract FlightSuretyApp {
                                 public
     {
         contractOwner = msg.sender;
-        flightSuretyData = FlightSuretyData(dataContract); // define reference to the data contract - flightsuretydata
+        // define reference to the data contract - flightsuretydata
+        flightSuretyData = FlightSuretyData(dataContract);
     }
 
     /********************************************************************************************/
@@ -88,12 +89,17 @@ contract FlightSuretyApp {
 
     function isOperational()
                             public
-                            pure
                             returns(bool)
     {
         return FlightSuretyData.isOperational;  // Modify to call data contract's status
     }
 
+    function isAirlineRegistered(address _airline)
+                            public
+                            returns(bool)
+    {
+        return FlightSuretyData.isAirlineRegistered(_airline);
+    }
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -105,12 +111,13 @@ contract FlightSuretyApp {
     */
     function registerAirline
                             (
+                              address _airline
                             )
                             external
-                            pure
+                            requireIsOperational
                             returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        return (FlightSuretyData.registerAirline(_airline, msg.sender));
     }
 
 
@@ -120,11 +127,16 @@ contract FlightSuretyApp {
     */
     function registerFlight
                                 (
+                                  string _flight,
+                                  uint256 _timestamp
                                 )
                                 external
-                                pure
+                                requireIsOperational
     {
-        FlightSuretyData.registerFlight();
+        require(FlightSuretyData.isRegistered(msg.sender), "airline is not registered. cannot register flight at this time.");
+        bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
+        require(!flights[flightKey].isRegistered, "flight has already been registered.");
+        flights[flightKey] = Flight(true, STATUS_CODE_UKNOWN, block.timestamp, msg.sender);
     }
 
    /**
@@ -139,19 +151,17 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
+                                requireIsOperational
     {
-            // react to flight status = 20 and find passengers who purchased insurance
-            // triggered by the oracle when a status is return
-            // TODO - put in a require statement, look for passengers that have purchased insurance and start process to determine how much they should be paid
-/*
+        // triggered by the oracle when a status is return
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-
-        flightSuretyData.updateFlight(airline, flight, timestamp, statusCode);
+        // update flight status
+        flights[flightKey].statusCode = statusCode;
+        flights[flightKey].updatedTimestamp = timestamp;
+        // react to flight status = 20 and find passengers who purchased insurance
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyData.creditInsurees(flightKey);
         }
-  */
     }
 
 
@@ -348,13 +358,11 @@ contract FlightSuretyApp {
 
 // endregion
 
-// define reference to data contract
+// define reference and interfaces to data contract FlightSuretyData
   contract FlightSuretyData {
-    // TODO: Add interfaces from FlightSuretyData
-    function registerAirline() external {}
-    function buy() external {}
-    function creditInsurees() external {}
-    function pay() external {}
-    function fund() public {}
+    function isOperational() public view returns(bool);
+    function isAirlineRegistered(address newAirline) public view returns(bool);
+    function creditInsurees(bytes32 flightKey) external;
+    function registerAirline(address newAirline,address fromAddress) external returns(bool success, uint256 votes);
   }
 }
