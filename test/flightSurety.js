@@ -7,7 +7,7 @@ contract('Flight Surety Tests', async (accounts) => {
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
-    await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+    await config.flightSuretyData.authorizeContract(config.flightSuretyApp.address);
   });
 
   /****************************************************************************************/
@@ -78,7 +78,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // ACT
     try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline, "wayneair 1",{from: config.firstAirline});
     }
     catch(e) {
 
@@ -96,15 +96,15 @@ contract('Flight Surety Tests', async (accounts) => {
     // Register and Fund two airlines
     await config.flightSuretyData.fund({from: accounts[0],value: web3.utils.toWei('10', "ether")});
 
-    await config.flightSuretyApp.registerAirline(accounts[1], {from: accounts[0]});
-    await config.flightSuretyApp.registerAirline(accounts[2], {from: accounts[0]});
-    await config.flightSuretyApp.registerAirline(accounts[3], {from: accounts[0]});
+    await config.flightSuretyApp.registerAirline(accounts[1], "wayneair 2",{from: accounts[0]});
+    await config.flightSuretyApp.registerAirline(accounts[2], "wayneair 3",{from: accounts[0]});
+    await config.flightSuretyApp.registerAirline(accounts[3], "wayneair 4",{from: accounts[0]});
     await config.flightSuretyData.fund({from: accounts[1],value: web3.utils.toWei('10', "ether")});
     await config.flightSuretyData.fund({from: accounts[2],value: web3.utils.toWei('10', "ether")});
     await config.flightSuretyData.fund({from: accounts[3],value: web3.utils.toWei('10', "ether")});
     // ACT
     try {
-        await config.flightSuretyApp.registerAirline(accounts[4], {from:  accounts[1]});
+        await config.flightSuretyApp.registerAirline(accounts[4], "wayneair 5",{from:  accounts[1]});
     }
     catch(e) {
 
@@ -123,7 +123,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // ACT
     try {
-        let reg_result = await config.flightSuretyApp.registerAirline(accounts[7], {from:  accounts[0]});
+        let reg_result = await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 6",{from:  accounts[0]});
     }
     catch(e) {
     }
@@ -134,9 +134,9 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(result, false, "airline cannot be registered until it is approved by 50% consensus.");
 
     try {
-        await config.flightSuretyApp.registerAirline(accounts[7], {from:  accounts[1]});
-        await config.flightSuretyApp.registerAirline(accounts[7], {from:  accounts[3]});
-        await config.flightSuretyApp.registerAirline(accounts[7], {from:  accounts[4]});
+        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 7",{from:  accounts[1]});
+        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 8",{from:  accounts[3]});
+        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 9",{from:  accounts[4]});
     }
     catch(e) {
     }

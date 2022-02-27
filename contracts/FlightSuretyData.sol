@@ -61,7 +61,6 @@ contract FlightSuretyData {
     */
     constructor
                                 (
-                                  string airlinename
                                 )
                                 public
     {
@@ -69,9 +68,9 @@ contract FlightSuretyData {
         authorizedContracts[msg.sender] = 1;
 
         // register the first airline
-        airlines[msg.sender] = Airline({isRegistered: true, numVotes: 0, hasFunds: false, hasVoted: false, name: airlinename, wallet: msg.sender, funds: 0 });
+        airlines[msg.sender] = Airline({isRegistered: true, numVotes: 0, hasFunds: false, hasVoted: false, name: "first airline", wallet: msg.sender, funds: 0 });
         numVoted = 0;
-        airlinesCount = 1;
+        airlinesCount++;
         registeredAirlines.push(msg.sender);   // track registered airlines so that i can iterate over array of airlines.
     }
 
@@ -169,24 +168,7 @@ contract FlightSuretyData {
                             external
                             requireContractOwner
     {
-        require(mode != operational,"New mode must be different from existing mode");
-        require(userProfiles[msg.sender].isAdmin,"Caller is not an admin");
         operational = mode;
-        /*
-        bool isDuplicate = false;
-        for (uint c=0; c=multiCalls.length; c++) {
-          if (multiCalls[c] == msg.sender) {
-            isDuplicate = true;
-            break;
-          }
-        }
-        require(!isDuplicate,"Caller has already called this function");
-        multiCalls.push(msg.sender);
-        if (multiCalls.length >= M) {
-          operational = mode;
-          multiCalls = new address[](0);
-        }
-        */
     }
 
     // authorize the calling contract(s) to restrict data contract callers
@@ -200,6 +182,10 @@ contract FlightSuretyData {
         authorizedContracts[contractAddress] = 1;
     }
 
+    // function to check to see if the calling contract is authorized to call this data contract
+    function isCallerAuthorized(address callingContract) external view returns(bool) {
+        return (authorizedContracts[callingContract] == 1);
+    }
     // deauthorize the calling contract
     function deauthorizeContract
                             (
@@ -209,6 +195,11 @@ contract FlightSuretyData {
                             requireContractOwner
     {
         delete authorizedContracts[contractAddress];
+    }
+
+    // verify that the airline is valid by ensuring it is funded.
+    function isAirline(address airline) external view returns(bool) {
+      return (airlines[airline].hasFunds == true);
     }
     function isAirlineRegistered
         (

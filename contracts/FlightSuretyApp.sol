@@ -97,6 +97,7 @@ contract FlightSuretyApp {
 
     function isAirlineRegistered(address _airline)
                             public
+                            view
                             returns(bool)
     {
         return flightSuretyData.isAirlineRegistered(_airline);
@@ -105,7 +106,10 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-
+    function registerUser (address account, bool isAdmin) external
+    {
+        flightSuretyData.registerUser(account, isAdmin);
+    }
    /**
     * @dev Add an airline to the registration queue
     *
@@ -162,7 +166,6 @@ contract FlightSuretyApp {
         // react to flight status = 20 and find passengers who purchased insurance
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyData.creditInsurees(flightKey);
-
         }
     }
 
@@ -366,4 +369,5 @@ contract FlightSuretyApp {
     function isAirlineRegistered(address account) public view returns(bool);
     function creditInsurees(bytes32 flightKey) external;
     function registerAirline( address airline, string airlinename) external;
+    function registerUser (address account, bool isAdmin) external;
   }
