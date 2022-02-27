@@ -16,23 +16,23 @@ contract FlightSuretyData {
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint constant M = 4;   // min number of multi-party voters
     uint private numVoted = 0;
-    uint airlinesVoted = 0;
-    address[] multiCalls = new address[](0);  // all of the addresses that have called the multi-party consensus function
-    address[] multiAirlineCalls = new address[](0);  // all of the airlines that have called the multi-party consensus, vote function
+    uint airlinesCount = 0;
+    address[] multiCalls = new address[](0);          // all of the addresses that have called the multi-party consensus function
+    address[] multiAirlineCalls = new address[](0);   // all of the airlines that have called the multi-party consensus, vote function
     struct Passenger {
         bool purchasedInsurance;
         address wallet;
         uint256 insurancePaid;
         uint256 insurancePayout;
-        address flightInsurance; // flight passenger purchased insurance for
-        mapping(string => uint256) flightInsuranceBought;
+        bool insurancePayoutComplete;
     }
     mapping(bytes32 => Passenger[]) private passengers;
-    // address[] public passengersWhoBoughtInsurance;
-    mapping(bytes32 => address []) public passengersWhoBoughtInsurance;
-    mapping(address => uint256) private insurancePayout;   // track insurance payout amount by passenger
-     mapping(bytes32 => address[]) private passengersByFlight;  // track those passengers who purchasesed insurance for the flight
-    mapping(bytes32 => uint256[]) private amountInsured;
+    mapping(bytes32 => address []) public passengersWhoBoughtInsurance;   // track those passengers who purchasesed insurance for the flight
+    mapping(address => uint256) private insurancePayout;                  // track insurance payout amount by passenger
+    mapping(bytes32 => uint256[]) private amountInsuredForFlight;
+
+    mapping(address => bool) private hasVoted;      // track airline consesnsus voting
+    address[] private registeredAirlines;           // track registered airline address
     struct UserProfile {
       bool isRegistered;
       bool isAdmin;
@@ -42,11 +42,13 @@ contract FlightSuretyData {
       bool isRegistered;
       uint numVotes;
       bool hasFunds;
+      bool hasVoted;
       string name;
       address wallet;
       uint256 funds;
     }
-    mapping(address => Airline) airlines;     // store registered airlines
+    // Airline[] private airlines;
+    mapping(address => Airline) airlines;
     mapping(address => uint256) private authorizedContracts;            // list of authorized contracts that can call this data contract
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -64,17 +66,13 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
-        airlinesVoted = 0;
         authorizedContracts[msg.sender] = 1;
 
         // register the first airline
-        airlines[msg.sender] = Airline({name: airlinename,
-                      isRegistered:true,
-                      hasFunds: false,
-                      numVotes: 0,
-                      funds: 0,
-                      name: "Wayne-Udacity-Airline",
-                      wallet: msg.sender});
+        airlines[msg.sender] = Airline({isRegistered: true, numVotes: 0, hasFunds: false, hasVoted: false, name: airlinename, wallet: msg.sender, funds: 0 });
+        numVoted = 0;
+        airlinesCount = 1;
+        registeredAirlines.push(msg.sender);   // track registered airlines so that i can iterate over array of airlines.
     }
 
     /********************************************************************************************/
@@ -231,27 +229,33 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
-                              address account
+                              address airline,
+                              string airlinename
                             )
                             external
                             requireIsOperational
                             requireIsCallerAuthorized
     {
-        require(!airlines[account].isRegistered,"Airline is already registered.");
-        if (airlines.length < M) {
-          airlines[account] = Airline({
-            isRegistered: true,
-            hasFunds: false,
-            numVotes: 1,
-            funds: 0,
-            name: "Wayne-Udacity-Airline" + block.timestamp,   // set default airline name by appending timestamp
-            wallet: account
-          });
+        require(!airlines[airline].isRegistered,"Airline is already registered.");
+        if (airlinesCount < M) {
+          airlines[airline] = Airline({isRegistered: true,hasFunds: false,numVotes: 1,funds: 0,name: airlinename,  wallet: airline});
+          registeredAirlines.push(airline);
+          airlinesCount++;
         } else {
-            airlines[account].numVotes++;
-            // need at least 50% consensus
-            if (airlines[account].numVotes >= airlines.length.div(2)) {
-              airlines[account].isRegistered = true;
+            if (!hasVoted[msg.sender]) {
+                numVoted++;
+            } else {
+                // need at least 50% consensus
+                if (numVotes >= registeredAirlines.length.div(2)) {
+                  // reset the voting
+                  for (uint i = 0; i < registeredAirlines.length; i++) {
+                    hasVoted[registeredAirlines[i]] = false;
+                  }
+                  numVoted = 0;
+                  airlines[airline] = Airline({isRegistered: true,hasFunds: false,numVotes: 1,funds: 0,name: airlinename,  wallet: account});
+                  registeredAirlines.push(airline);
+                  airlinesCount++;
+                }
             }
         }
     }
@@ -267,26 +271,18 @@ contract FlightSuretyData {
                               string memory flight,
                               uint256 timestamp
                             )
+                            requireIsOperational
                             external
                             payable
     {
       require(msg.value >= INSURANCE_FUND_AMOUNT, "Insufficient funds to purchase flight insurance");
       require(msg.sender == tx.origin, "Unauthorized Contract");
       bytes32 flightkey = getFlightKey(airline,flight,timestamp);
-      passengers[flightkey].push(Passenger({purchasedInsurance:true,
-                  wallet: msg.sender,
-                  insurancePaid: msg.value,
-                  flightInsurance: flight,
-                  insurancePayout: 0}));
       // track passengers who bought insurance
+      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: 0, wallet: msg.sender, insurancePayoutComplete: false});
       passengersWhoBoughtInsurance[flightKey].push(msg.sender);
-      msg.sender.transfer(msg.value.sub(INSURANCE_FUND_AMOUNT));
-      /*
-       insurance_purchases[passenger][flight_key] = msg.value;
-        flight_purchasees[flight_key].push(passenger);
-
-        https://github.com/yarode/FlightSurety/blob/master/contracts/FlightSuretyData.sol
-        */
+      // track amount of insurance purchased for the flight
+      amountInsuredForFlight[flightKey].push(msg.value);
     }
 
     /**
@@ -301,13 +297,17 @@ contract FlightSuretyData {
                                 external
                                 requireIsOperational
     {
-      //TODO:
       bytes32 flightKey = getFlightkey(airline, flight, timestamp);
       address passengerWallet;
+      uint256 insuranceToBePaid;
+
       for (uint i = 0; i < passengersWhoBoughtInsurance[flightKey].length; i++) {
         passengerWallet = passengersWhoBoughtInsurance[flightKey][i];
-        // credit the passenger
-        // passengersOwedInsuranceCredit[passengerWallet] = passengersOwedInsuranceCredit[passengerWallet] + insurance_purchases[passenger][flightKey] *3/2;
+        insuranceToBePaid = amountInsuredForFlight[flightKey][i].mul(50);   // credit insuree 1.5x amount they paid for insurance.
+        delete passengersWhoBoughtInsurance[flightKey][i];                  // remove passenger from the array so that they can withdraw again.
+        amountInsuredForFlight[flightKey].sub(insuranceToBePaid);
+        passengers[passengerWallet].insurancePayout.add(insuranceToBePaid);   // add payout to the passengers balance
+        passengers[passengerWallet].insurancePayoutComplete = true;
       }
     }
 
@@ -320,13 +320,14 @@ contract FlightSuretyData {
                             (
                               address account
                             )
+                            requireIsOperational
                             external
                             payable
     {
-      //TODO:
-      // uint256 = payoutAmount = insureeBalance[address]
-      // insureeBalance[address] = 0;
-      account.transfer(payoutAmount);
+      require(msg.value <= passengers[account].insurancePayout,"cannot withdraw more than what is in the insurance payout");
+      uint256 withdrawalAmount = msg.value;
+      passengers[account].insurancePayout.sub(withdrawalAmount);
+      account.transfer(withdrawalAmount);
     }
 
    /**
@@ -371,7 +372,7 @@ contract FlightSuretyData {
                             external
                             payable
     {
-        fund();
+        fund(msg.sender);
     }
 
 
