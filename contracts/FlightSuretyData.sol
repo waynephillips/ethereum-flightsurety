@@ -201,6 +201,10 @@ contract FlightSuretyData {
     function isAirline(address airline) external view returns(bool) {
       return (airlines[airline].hasFunds == true);
     }
+    // retrieve airline funds
+    function airlineFunds(address airline) external view returns (uint256) {
+      return (airlines[airline].funds);
+    }
     function isAirlineRegistered
         (
           address account

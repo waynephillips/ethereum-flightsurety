@@ -9,13 +9,14 @@ Application is separated into 2 smart contracts
 
 Contract Features
 - Ability to control operational status (that is active or not active)
+  - Note: Verify with Truffle Test
 - Where appropriate, functions will have require() call at the beginning to fail fast
 - First airline will be registered when the contract is deployed
+  - Note: Verifiy with Truffle Test
 - Only existing airline(s) may register a new airline until there are at least four airlines registered.
   - Note: Truffle Test
 - Airline can be registered, but does not participate in contract until it submits funding of 10 ether.
   - Note: Verify with Truffle Test
--
 Dapp client
 - Execute steps
   - npm run dapp
@@ -29,11 +30,15 @@ Dapp client
       - Ability to purchase flight insurance for no more than 1 ether
   - Passenger Payment
     - Passengers may pay up to 1 ether for purchasing flight insurance.
+    - Note: Verify with Truffle Test
   - Passenger Repayment
     - If flight is delayed due to airline fault, passenger receives credit of 1.5X the amount they paid
+      - Note: Verify with Truffle Test
     - Ability to trigger the contract to request flight status update (looking to see if there are flight delays that require insurance payout)
+      - Note: Verify with Truffle Test
   - Passenger Withdraw
     - Passenger can withdraw any funds owed to them as a result of receiving credit for insurance payout
+      - Note: Verify with Truffle Test
     - Insurance payouts are not sent directly to passenger’s wallet
 
 Oracle Server App
