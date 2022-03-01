@@ -126,7 +126,6 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(result[3].toString(), fundamount.toString(), "airline was not funded with 10 ether.");
 });
   it('(airline) registration of 5th and subesequent airlines requires multi-party consensus of 50% of registered airlines.', async () => {
-    //TODO:
     // ARRANGE
         let airline5 = accounts[5];
         let airline6 = accounts[6];

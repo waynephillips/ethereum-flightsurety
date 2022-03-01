@@ -15,7 +15,7 @@ import './flightsurety.css';
             console.log(error,result);
             display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
         });
-    
+
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
@@ -25,9 +25,43 @@ import './flightsurety.css';
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
         })
-    
+        DOM.elid('register-airline').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('airline-address').value;
+          contract.registerAirline(airlineAddress, (error, result) => {
+              // console.log('Registering airline ' + error.message);
+              displaySimple([{ label: 'Registering airline', error: getErrorMessage(error), value: result }], "registration-display-wrapper");
+          });
+        })
+        DOM.elid('fund').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('airline-address').value;
+          contract.fundAirline((error, result) => {
+              // displaySimple('Airline', 'fund', [{ label: 'fund airline', error: error, value: result.airline + ' ' + result.timestamp }]);
+              displaySimple([{ label: 'Airline funding result', error: getErrorMessage(error), value: JSON.stringify(result) }], "funding-display-wrapper");
+          });
+        })
+
+        DOM.elid('buy-insurance').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('insurance-airline').value;
+          let flight = DOM.elid('insurance-flight').value;
+          let amount = DOM.elid('insurance-amount').value;
+
+          contract.buyInsurance(flight, airlineAddress, amount, (error, result) => {
+              displaySimple([{ label: 'Buy Insurance', error: getErrorMessage(error), value: JSON.stringify(result) }], "insurance-display-wrapper");
+          });
+        })
+
+        DOM.elid('claim-insurance').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('insurance-airline').value;
+          let flight = DOM.elid('insurance-flight').value;
+
+          contract.withdrawInsurancePayout((error, result) => {
+              console.log('Pay passenger insurance money: ' + JSON.stringify(error) + ', result: ' + JSON.stringify(result));
+              displaySimple([{ label: 'Pay passenger insurance money', error: getErrorMessage(error), value: JSON.stringify(result) }], "insurance-display-wrapper");
+          });
+      })
+
     });
-    
+
 
 })();
 
@@ -46,10 +80,3 @@ function display(title, description, results) {
     displayDiv.append(section);
 
 }
-
-
-
-
-
-
-

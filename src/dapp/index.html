@@ -23,6 +23,32 @@
 
         <div id="display-wrapper" class="top-20">
         </div>
+        <div class="section2 col-sm-12">
+          <h5>Airline Registration</h5>
+          <label class="form">Airline address</label> <input type="text" id="airline-address">
+          <btn class="btn btn-primary" id="register-airline">Register</btn>
+          <p>Use owner or registered airline account</p>
+          <div id="registration-display-wrapper"></div>
+        </div>
+        <div class="section2 col-sm-12">
+          <h5>Airline funding</h5>
+          <btn class="btn btn-primary" id="fund">Fund</btn>
+          <p>Use registered airline account to fund airline</p>
+          <div id="funding-display-wrapper"></div>
+        </div>
+        <div class="section2 col-sm-12">
+          <h5>Insurance</h5>
+          <label class="form">Airline</label> <input type="text" id="insurance-airline">
+          <label class="form">Flight</label> <input type="text" id="insurance-flight">
+          <label class="form">Insurance amount (0.1-1 ether)</label> <input type="text" id="insurance-amount">
+          <btn class="btn btn-primary" id="buy-insurance">Buy insurance</btn><span>(Required: airline, flight, amount)</span>
+          <br>
+          <btn class="btn btn-primary" id="check-claim">Check credited money</btn><span>(Required: airline, flight)</span>
+          <br>
+          <btn class="btn btn-primary" id="claim-insurance">Withdraw insurance money</btn><span>(Required: airline, flight)</span>
+          <div id="insurance-display-wrapper"></div>
+          <div id="credit-display-wrapper"></div>
+        </div>
         <div class="row top-20">
             <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>

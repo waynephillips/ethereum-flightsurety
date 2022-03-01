@@ -16,11 +16,11 @@ export default class Contract {
 
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
-           
+
             this.owner = accts[0];
 
             let counter = 1;
-            
+
             while(this.airlines.length < 5) {
                 this.airlines.push(accts[counter++]);
             }
@@ -46,11 +46,85 @@ export default class Contract {
             airline: self.airlines[0],
             flight: flight,
             timestamp: Math.floor(Date.now() / 1000)
-        } 
+        }
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {
                 callback(error, payload);
             });
     }
+
+    registerAirline(airline,name, callback) {
+      let self = this;
+      self.flightSuretyApp.methods
+          .registerAirline(airline, name)
+          .send({ from: self.account , gas: 999999999}, (error, result) => {
+              callback(error, result);
+          });
+  }
+  fundAirline(amount, callback) {
+      let self = this;
+      console.log('fundAirline with account', self.account);
+      let amountInWei = self.web3.utils.toWei(amount, "ether").toString();
+      self.flightSuretyData.methods
+          .fund(self.account)
+          .send({ from: self.account, value: amountInWei ,gas: 999999999 }, (error, result) => {
+              callback(error, result);
+          });
+  }
+  registerFlight(flightNumber, timestamp, callback) {
+      let self = this;
+      console.log('registerFlight with account', self.account);
+      self.flightSuretyApp.methods
+          .registerFlight(flightNumber, timestamp)
+          .send({ from: self.account, gas: 999999999 }, (error, result) => {
+              callback(error, result);
+          });
+  }
+  fetchAirline() {
+    let self = this;
+      console.log('fetchAirline with account', self.account);
+      self.flightSuretyData.methods
+          .getAirline(self.account)
+          .send({ from: self.account, gas: 999999999 }, (error, result) => {
+              callback(error, result);
+          });
+  }
+  fetchPassenger() {
+    let self = this;
+      console.log('fetchPassenger with account', self.account);
+      self.flightSuretyData.methods
+          .getPassenger(self.account)
+          .send({ from: self.account, gas: 999999999 }, (error, result) => {
+              callback(error, result);
+          });
+  }
+  fetchFlightStatus( flightNumber, timestamp, callback) {
+      let self = this;
+      console.log('fetchFlightStatus for ', flightKey);
+      self.flightSuretyApp.methods
+          .fetchFlightStatus(self.account, flightNumber, timestamp)
+          .send({ from: self.account }, (error, result) => {
+              callback(error, result);
+          });
+  }
+  buyInsurance(flightNumber, timestamp, amount, callback) {
+      let self = this;
+      console.log('buyInsurance for ', self.account);
+      let amountInWei = self.web3.utils.toWei(amount, "ether").toString();
+      self.flightSuretyData.methods
+          .buy(self.account,flightNumber,timestamp)
+          .send({ from: self.account, value: amountInWei, gas: 999999999 }, (error, result) => {
+              callback(error, result);
+          });
+  }
+
+  withdrawInsurancePayout(callback) {
+      let self = this;
+      self.flightSuretyData.methods
+        .pay(self.account)
+        .send({ from: self.account, gas: 999999999 }, (error, result) => {
+          callback(error, result);
+      });
+  }
 }
