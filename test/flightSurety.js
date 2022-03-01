@@ -78,7 +78,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // ACT
     try {
-        await config.flightSuretyApp.registerAirline(newAirline, "wayneair 1",{from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline, "wayneair 2",{from: config.firstAirline});
     }
     catch(e) {
 
@@ -92,25 +92,25 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(airline) only existing airline(s) may register a new airline until there are at least four airlines registered.', async () => {
-     // ARRANGE
-    // Register and Fund two airlines
 
-    await config.flightSuretyData.fund(accounts[2], {from: accounts[0],value: web3.utils.toWei('10', "ether")});
-    await config.flightSuretyApp.registerAirline(accounts[3], "wayneair 2",{from: config.firstAirline});
-    await config.flightSuretyApp.registerAirline(accounts[4], "wayneair 3",{from: config.firstAirline});
-    await config.flightSuretyApp.registerAirline(accounts[5], "wayneair 4",{from: config.firstAirline});
-    await config.flightSuretyData.fund(accounts[3],{from: accounts[3],value: web3.utils.toWei('10', "ether")});
-    await config.flightSuretyData.fund(accounts[4],{from: accounts[4],value: web3.utils.toWei('10', "ether")});
-    await config.flightSuretyData.fund(accounts[5],{from: accounts[5],value: web3.utils.toWei('10', "ether")});
-    // ACT
-    await config.flightSuretyApp.registerAirline(accounts[6], "wayneair 5",{from:  accounts[1]});
-
-
-    let result = await config.flightSuretyData.isAirlineRegistered.call(accounts[6]);
-    //let result = await config.flightSuretyData.isAirline.call(newAirline);
+    try {
+       // ARRANGE
+        // Register and Fund two airlines
+        await config.flightSuretyData.fund(accounts[2], {from: accounts[2],value: web3.utils.toWei('10', "ether")});
+        await config.flightSuretyApp.registerAirline(accounts[3], "wayneair 3",{from: accounts[2]});
+        await config.flightSuretyApp.registerAirline(accounts[4], "wayneair 4",{from: accounts[2]});
+        await config.flightSuretyData.fund(accounts[3],{from: accounts[3],value: web3.utils.toWei('10', "ether")});
+        await config.flightSuretyData.fund(accounts[4],{from: accounts[4],value: web3.utils.toWei('10', "ether")});
+    }
+    catch (e)
+    {
+      console.log("error in only exist airlines " + e);
+    }
+    // ACT   - confirm that the last airline registered by account 2 is really registered
+    let result = await config.flightSuretyData.getAirline(accounts[4]);
 
     // ASSERT
-    assert.equal(result, true, "only existing and funded airline can register another airline.");
+    assert.equal(result[0], true, "only existing and funded airline can register another airline.");
   });
 
   it('(airline) airline can provide funds (10 ether) to participate in contracts and be fully registered.', async () => {
@@ -119,67 +119,35 @@ contract('Flight Surety Tests', async (accounts) => {
     let fundamount = web3.utils.toWei('10', 'ether');
     // ACT
 
-    await config.flightSuretyData.fund({ from: config.firstAirline, value: fundamount });
-
-    let result = await config.flightSuretyData.airlineFunds(config.firstAirline);
+    await config.flightSuretyData.fund(config.firstAirline,{ from: config.firstAirline, value: fundamount });
+    let result = await config.flightSuretyData.getAirline(config.firstAirline);
 
     // ASSERT
-    assert.equal(result.toString(), fundamount.toString(), "airline was not funded with 10 ether.");
+    assert.equal(result[3].toString(), fundamount.toString(), "airline was not funded with 10 ether.");
 });
   it('(airline) registration of 5th and subesequent airlines requires multi-party consensus of 50% of registered airlines.', async () => {
     //TODO:
     // ARRANGE
+        let airline5 = accounts[5];
+        let airline6 = accounts[6];
+        let airline7 = accounts[7];
+        let airline8 = accounts[8];
 
-    /*
-     let secondAirline = accounts[2];
-        let thirdAirline = accounts[3];
-        let fourthAirline = accounts[4];
-        let fifthAirline = accounts[5];
+          //register and fund 3 airlines
+          await config.flightSuretyApp.registerAirline(airline5,"wayne air 5", {from:config.firstAirline});
+          await config.flightSuretyData.fund(airline5,{from:airline5, value: web3.utils.toWei('10', "ether")});
+          await config.flightSuretyApp.registerAirline(airline6, "wayne air 6", {from:accounts[2]});
+          await config.flightSuretyData.fund(airline6,{from:airline6, value: web3.utils.toWei('10', "ether")});
+          await config.flightSuretyApp.registerAirline(airline7, "wayne air 7",{from:accounts[2]});
+          await config.flightSuretyData.fund(airline7,{from:airline7, value: web3.utils.toWei('10', "ether")});
 
-        try {
-          await flightSuretyApp.registerAirline(secondAirline, {from:firstAirline});
-          await flightSuretyApp.fundAirline({from:secondAirline, value:fund});
-          await flightSuretyApp.registerAirline(thirdAirline, {from:secondAirline});
-          await flightSuretyApp.fundAirline({from:thirdAirline, value:fund});
-          await flightSuretyApp.registerAirline(fourthAirline, {from:thirdAirline});
-          await flightSuretyApp.fundAirline({from:fourthAirline, value:fund});
+          // need 2 airlines to register and vote for airline8, this should achieve the 50% consensus
+          await config.flightSuretyApp.registerAirline(airline8, "wayne air 8", {from:airline6});
+          await config.flightSuretyApp.registerAirline(airline8, "wayne air 8", {from:airline7});
 
-          await flightSuretyApp.registerAirline(fifthAirline, {from:thirdAirline});
-          await flightSuretyApp.registerAirline(fifthAirline, {from:fourthAirline});
-        } catch (err) {
-          console.log(err);
-        }
-        let result5 = await flightSuretyApp.getAirline(fifthAirline);
-        assert.equal(result5[1], true, "Airline 3 and 4 should be able to register another airline if it has provided funding");
-    */
-    // Register and Fund two airlines
-    await config.flightSuretyData.fund(accounts[4],{from: accounts[4],value: web3.utils.toWei('10', "ether")});
-
-    // ACT
-    try {
-        let reg_result = await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 6",{from:  accounts[4]});
-    }
-    catch(e) {
-      console.log(e);
-    }
-
-    let result = await config.flightSuretyApp.isAirlineRegistered.call(accounts[7]);
-
-
-    // ASSERT
-    assert.equal(result, false, "airline cannot be registered until it is approved by 50% consensus.");
-
-    try {
-        await config.flightSuretyApp.registerAirline(accounts[7], "wayneair 7",{from:  accounts[1]});
-        await config.flightSuretyApp.registerAirline(accounts[8], "wayneair 8",{from:  accounts[3]});
-        await config.flightSuretyApp.registerAirline(accounts[9], "wayneair 9",{from:  accounts[4]});
-    }
-    catch(e) {
-    }
-    result = await config.flightSuretyData.isAirlineRegistered.call(accounts[7]);
-
-    // ASSERT
-    assert.equal(result, true, "airline is not registered because 50% consensus has not been reached.");
+        // assert
+        let result = await config.flightSuretyData.getAirline(airline8);
+        assert.equal(result[0], true, "two different airlines should be able to register another new airline - 50% consensus");
 
   });
 
@@ -190,37 +158,42 @@ contract('Flight Surety Tests', async (accounts) => {
     }
     catch (e){
     }
-    result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+    result = await config.flightSuretyData.getAirline(newAirline);
+
      // ASSERT
-     assert.equal(result, false, "airline not able to participate in contract because no funds.");
+     assert.equal(result[1], false, "airline not able to participate in contract because no funds.");
   });
 
   it('(airline) airline may pay 10 ether and participate in contract', async () => {
     let firstAirline = accounts[1];
-    let newAirline = accounts[9];
+    let newAirline = accounts[10];
+    fundamount = web3.utils.toWei('10', "ether");
     try {
         // fund first airline because it should have no funds
         await config.flightSuretyData.fund(config.firstAirline,{from: config.firstAirline,value: web3.utils.toWei('10', "ether")});
         // now first airline should be able to register a new airline.
-        await config.flightSuretyApp.registerAirline(newAirline, "wayneair 9",{from:  firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline, "wayneair 10",{from:  firstAirline});
     }
     catch (e){
     }
-    result = await config.flightSuretyData.isAirlineRegistered.call(newAirline);
+    result = await config.flightSuretyData.getAirline(config.firstAirline);
      // ASSERT
-     assert.equal(result, true, "airline not able to participate in contract because no funds.");
+     assert.equal(result[1] , true, "airline not able to participate in contract because no funds.");
   });
 
   it('(passenger) passenger(s) may pay up to 1 ether for purchasing flight insurance.', async () => {
     // ACT
+    let flightTimestamp = Math.floor(Date.now() / 1000);
+    fundamount = web3.utils.toWei('1', "ether");
     try {
-        await config.flightSuretyData.buy(config.firstAirline,"wayneair 1",timestampe, {from: config.firstPassenger, value: web3.utils.toWei('1', "ether")});
+        await config.flightSuretyData.buy(config.firstAirline,"wayneair 1",flightTimestamp, {from: accounts[10], value: fundamount});
     }
     catch(e) {
-
+        console.log(e);
     }
 
-    let passengerwithInsurance = await config.flightSuretyData.passengersWhoBoughtInsurance.call(0);
-    assert.equal(passengerwithInsurance, config.firstPassenger, "passenger should be on the list of passsengers who bought insurance.");
+    let passenger = await config.flightSuretyData.getPassenger(accounts[10]);
+    assert.equal(passenger[0], true, "passenger record should show they purchased insurance.");
+
   });
 });
