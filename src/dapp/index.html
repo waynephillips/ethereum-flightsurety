@@ -21,39 +21,78 @@
 
     <main class="container">
 
-        <div id="display-wrapper" class="top-20">
+      <table class="table table-dark" id="flights-display">
+        <thead>
+          <tr>
+              <th scope="col">Flight</th>
+              <th scope="col">Destination</th>
+              <th scope="col">Departure Time</th>
+              <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+
+        <div class="form-group top-20">
+          <label>Airline Registration</label>
+          <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                  <div class="input-group-text">Airline Address</div>
+              </div>
+              <input type="text" class="form-control" id="funds" placeholder="address is the owner account.">
+          </div>
         </div>
-        <div class="section2 col-sm-12">
-          <h5>Airline Registration</h5>
-          <label class="form">Airline address</label> <input type="text" id="airline-address">
-          <btn class="btn btn-primary" id="register-airline">Register</btn>
-          <p>Use owner or registered airline account</p>
-          <div id="registration-display-wrapper"></div>
-        </div>
-        <div class="section2 col-sm-12">
-          <h5>Airline funding</h5>
-          <btn class="btn btn-primary" id="fund">Fund</btn>
-          <p>Use registered airline account to fund airline</p>
+        <button type="submit" class="btn btn-primary" id="register-airline">Register</button>
+        <br>
+
+        <div class="form-group top-20">
+          <label>Fund Airline</label>
+          <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                  <div class="input-group-text">Airline Address</div>
+              </div>
+              <input type="text" class="form-control" id="funds" placeholder="registered airline address.">
+          </div>
           <div id="funding-display-wrapper"></div>
         </div>
-        <div class="section2 col-sm-12">
-          <h5>Insurance</h5>
-          <label class="form">Airline</label> <input type="text" id="insurance-airline">
-          <label class="form">Flight</label> <input type="text" id="insurance-flight">
-          <label class="form">Insurance amount (0.1-1 ether)</label> <input type="text" id="insurance-amount">
-          <btn class="btn btn-primary" id="buy-insurance">Buy insurance</btn><span>(Required: airline, flight, amount)</span>
-          <br>
-          <btn class="btn btn-primary" id="check-claim">Check credited money</btn><span>(Required: airline, flight)</span>
-          <br>
-          <btn class="btn btn-primary" id="claim-insurance">Withdraw insurance money</btn><span>(Required: airline, flight)</span>
+        <button type="submit" class="btn btn-primary" id="fund">Fund</button>
+        <br>
+        <div class="form-group top-20">
+          <label>Buy Flight Insurance</label>
+          <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                  <div class="input-group-text">Airline Address</div>
+              </div>
+              <input type="text" class="form-control" id="insurance-airline" placeholder="registered airline address.">
+              <div class="input-group-prepend">
+                <div class="input-group-text">Flight</div>
+              </div>
+              <input type="text" class="form-control" id="insurance-flight" placeholder="registered flight address.">
+              <div class="input-group-prepend">
+                <div class="input-group-text">Insurance Cost</div>
+              </div>
+              <input type="text" class="form-control" id="insurance-amount" value="1">
+          </div>
           <div id="insurance-display-wrapper"></div>
           <div id="credit-display-wrapper"></div>
         </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+        <button type="submit" class="btn btn-primary" id="buy-insurance">Buy Insurance</button>
+        <button type="submit" class="btn btn-primary" id="check-claim">Verify Insurance Payout</button>
+        <button type="submit" class="btn btn-primary" id="claim-insurance">Withdraw Insurance Payout</button>
+
+        <br>
+        <div class="form-group top-20">
+          <label>Oracles</label>
+          <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                  <div class="input-group-text">Flight Number</div>
+              </div>
+              <input type="text" class="form-control" id="flight-number" placeholder="">
+          </div>
+          <div id="oracle-display-wrapper"></div>
         </div>
+        <button type="submit" class="btn btn-primary" id="submit-oracle">Fetch Flight Status</button>
     </main>
-
 </body>
-
 </html>
