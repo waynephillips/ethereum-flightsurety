@@ -9,6 +9,11 @@ import './flightsurety.css';
     let result = null;
 
     let contract = new Contract('localhost', () => {
+        DOM.elid('flight-number').value = 'WAYNEAIR007';
+        DOM.elid('airline-address').value = contract.owner;
+        DOM.elid('fund-airline-address').value = contract.owner;
+        DOM.elid('insurance-airline').value = contract.owner;
+        DOM.elid('insurance-flight').value = 'WAYNEAIR007';
 
         // Read transaction
         contract.isOperational((error, result) => {
@@ -33,7 +38,7 @@ import './flightsurety.css';
         })
         DOM.elid('fund-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('fund-airline-address').value;
-          contract.fundAirline(10,(error, result) => {
+          contract.fundAirline("10",(error, result) => {
               display('', `Funds added`, [ { label: 'Funds added to airline: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
