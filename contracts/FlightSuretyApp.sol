@@ -169,6 +169,16 @@ contract FlightSuretyApp {
         }
     }
 
+    function fetchFlight(
+            string _flight,
+            uint256 _timestamp) requireIsOperational
+            public
+            view
+            returns (bool registered, uint8 status, uint256 timestamp, address airline)
+            {
+            bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
+            return ( flights[flightKey].isRegistered, flights[flightKey].statusCode, flights[flightKey].updatedTimestamp, flights[flightKey].airline);
+    }
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus

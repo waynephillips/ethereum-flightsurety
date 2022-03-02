@@ -28,38 +28,52 @@ import './flightsurety.css';
         DOM.elid('register-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('airline-address').value;
           contract.registerAirline(airlineAddress, (error, result) => {
-              // console.log('Registering airline ' + error.message);
-              displaySimple([{ label: 'Registering airline', error: getErrorMessage(error), value: result }], "registration-display-wrapper");
+              display('', `Airline Registered`, [ { label: 'Register Airline: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
-        DOM.elid('fund').addEventListener('click', () => {
-          let airlineAddress = DOM.elid('airline-address').value;
-          contract.fundAirline((error, result) => {
-              // displaySimple('Airline', 'fund', [{ label: 'fund airline', error: error, value: result.airline + ' ' + result.timestamp }]);
-              displaySimple([{ label: 'Airline funding result', error: getErrorMessage(error), value: JSON.stringify(result) }], "funding-display-wrapper");
+        DOM.elid('fund-airline').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('fund-airline-address').value;
+          contract.fundAirline(10,(error, result) => {
+              display('', `Funds added`, [ { label: 'Funds added to airline: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
 
+        // register flight section
+        DOM.elid('register-flight').addEventListener('click', () => {
+          let flightnumber = DOM.elid('flight-nummber').value;
+          contract.registerFlight(flightnumber, (error, result) => {
+              display('', `Flight Registered`, [ { label: 'Register Flight Result: ', error: error, value: JSON.stringify(result)} ]);
+          });
+        })
+
+        // buy insurance section
         DOM.elid('buy-insurance').addEventListener('click', () => {
           let airlineAddress = DOM.elid('insurance-airline').value;
           let flight = DOM.elid('insurance-flight').value;
           let amount = DOM.elid('insurance-amount').value;
 
           contract.buyInsurance(flight, airlineAddress, amount, (error, result) => {
-              displaySimple([{ label: 'Buy Insurance', error: getErrorMessage(error), value: JSON.stringify(result) }], "insurance-display-wrapper");
+              display('', `Insurance Bought`, [ { label: 'Buy Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
 
-        DOM.elid('claim-insurance').addEventListener('click', () => {
+        DOM.elid('withdraw-insurance').addEventListener('click', () => {
           let airlineAddress = DOM.elid('insurance-airline').value;
           let flight = DOM.elid('insurance-flight').value;
 
           contract.withdrawInsurancePayout((error, result) => {
-              console.log('Pay passenger insurance money: ' + JSON.stringify(error) + ', result: ' + JSON.stringify(result));
-              displaySimple([{ label: 'Pay passenger insurance money', error: getErrorMessage(error), value: JSON.stringify(result) }], "insurance-display-wrapper");
+              display('', `Insurance Withdrawn`, [ { label: 'Insurance Withdrawn Result: ', error: error, value: JSON.stringify(result)} ]);
           });
-      })
+        })
+        // verify insurance
+        DOM.elid('verify-insurance').addEventListener('click', () => {
+          let airlineAddress = DOM.elid('insurance-airline').value;
+          let flight = DOM.elid('insurance-flight').value;
 
+          contract.withdrawInsurancePayout((error, result) => {
+              display('', `Insurance Payout Verified`, [ { label: 'Verify Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
+            });
+        })
     });
 
 
