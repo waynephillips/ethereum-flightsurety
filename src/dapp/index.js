@@ -32,7 +32,9 @@ import './flightsurety.css';
         })
         DOM.elid('register-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('airline-address').value;
-          contract.registerAirline(airlineAddress, (error, result) => {
+          let airlinename = DOM.elid('airline-name').value;
+          console.log("airline to register = " + airlineAddress);
+          contract.registerAirline(airlineAddress, airlinename, (error, result) => {
               display('', `Airline Registered`, [ { label: 'Register Airline: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
@@ -75,7 +77,7 @@ import './flightsurety.css';
           let airlineAddress = DOM.elid('insurance-airline').value;
           let flight = DOM.elid('insurance-flight').value;
 
-          contract.withdrawInsurancePayout((error, result) => {
+          contract.fetchPassenger((error, result) => {
               display('', `Insurance Payout Verified`, [ { label: 'Verify Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
             });
         })
