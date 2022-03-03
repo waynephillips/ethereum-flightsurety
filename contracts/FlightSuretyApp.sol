@@ -169,6 +169,11 @@ contract FlightSuretyApp {
         }
     }
 
+    function getFlightStatus(string flight, uint256 timestamp) external view returns (uint8) {
+            bytes32 flightKey = getFlightKey(msg.sender, flight, timestamp);
+            return ( flights[flightKey].statusCode);
+    }
+
     function fetchFlight(
             string _flight,
             uint256 _timestamp) requireIsOperational

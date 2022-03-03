@@ -226,6 +226,9 @@ contract FlightSuretyData {
         );
     }
 
+    function getPassengerInsurancePayout(address passenger) requireIsOperational public view returns (uint256 issurepayout) {
+        return (passengers[passenger].insurancePayout );
+    }
     function getAirline(address airline) requireIsOperational public view returns (bool registered, bool hasfunds, string name, uint256 funds, uint numVotes,uint256 numairlines) {
         return (
             airlines[airline].isRegistered,

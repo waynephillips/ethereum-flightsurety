@@ -11,6 +11,7 @@ import './flightsurety.css';
     let contract = new Contract('localhost', () => {
         DOM.elid('flight-number').value = 'WAYNEAIR007';
         DOM.elid('airline-address').value = contract.airlines[1];
+        DOM.elid('airline-fund').value = '10';
         DOM.elid('fund-airline-address').value = contract.airlines[1];
         DOM.elid('insurance-airline').value = contract.airlines[1];
         DOM.elid('insurance-flight').value = 'WAYNEAIR007';
@@ -30,29 +31,29 @@ import './flightsurety.css';
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
         })
+
         DOM.elid('register-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('airline-address').value;
           let airlinename = DOM.elid('airline-name').value;
-          console.log("airline to register = " + airlineAddress);
           contract.registerAirline(airlineAddress, airlinename, (error, result) => {
-              display('', `Airline Registered`, [ { label: 'Register Airline: ', error: error, value: JSON.stringify(result)} ]);
+              display('Airlines', `Airline Registered`, [ { label: 'Register Airline: ', error: error, value: result.statusmessage} ]);
           });
         })
+
         DOM.elid('fund-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('fund-airline-address').value;
-          let airlinefund = DOM.elid('airline-fund').value.toString();
-          let amountInWei = self.web3.utils.toWei(airlinefund, "ether").toString();
-          contract.fundAirline(airlineAddress,amountInWei,(error, result) => {
-              display('', `Funds added`, [ { label: 'Funds added to airline: ', error: error, value: JSON.stringify(result)} ]);
+          let airlinefund = DOM.elid('airline-fund').value;
+          contract.fundAirline(airlineAddress,airlinefund,(error, result) => {
+              display('Airlines', `Funds added`, [ { label: 'Funds added to airline: ', error: error, value: result.fund + 'wei' + '  ' + result.statusmessage} ]);
           });
         })
 
         // register flight section
         DOM.elid('register-flight').addEventListener('click', () => {
-          let flightnumber = DOM.elid('flight-nummber').value;
-
+          let flightnumber = DOM.elid('flight-number').value;
+          console.log("flight number to register = " + flightnumber);
           contract.registerFlight(flightnumber, (error, result) => {
-              display('', `Flight Registered`, [ { label: 'Register Flight Result: ', error: error, value: JSON.stringify(result)} ]);
+              display('Flights', `Flight Registered`, [ { label: 'Register Flight Result: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
 
@@ -63,7 +64,7 @@ import './flightsurety.css';
           let amount = DOM.elid('insurance-amount').value;
 
           contract.buyInsurance(flight, airlineAddress, amount, (error, result) => {
-              display('', `Insurance Bought`, [ { label: 'Buy Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
+              display('Passengers', `Insurance Bought`, [ { label: 'Buy Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
 
@@ -72,17 +73,18 @@ import './flightsurety.css';
           let flight = DOM.elid('insurance-flight').value;
 
           contract.withdrawInsurancePayout((error, result) => {
-              display('', `Insurance Withdrawn`, [ { label: 'Insurance Withdrawn Result: ', error: error, value: JSON.stringify(result)} ]);
+              display('Passengers', `Insurance Withdrawn`, [ { label: 'Insurance Withdrawn Result: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
+
         // verify insurance
         DOM.elid('verify-insurance').addEventListener('click', () => {
           let airlineAddress = DOM.elid('insurance-airline').value;
           let flight = DOM.elid('insurance-flight').value;
 
           contract.fetchPassenger((error, result) => {
-              display('', `Insurance Payout Verified`, [ { label: 'Verify Insurance Result: ', error: error, value: JSON.stringify(result)} ]);
-            });
+              display('Passengers', `Insurance Payout Verified`, [ { label: 'Verify Insurance Result: ', error: error, value: result + 'wei'} ]);
+          });
         })
     });
 
