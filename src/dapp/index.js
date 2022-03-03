@@ -10,9 +10,9 @@ import './flightsurety.css';
 
     let contract = new Contract('localhost', () => {
         DOM.elid('flight-number').value = 'WAYNEAIR007';
-        DOM.elid('airline-address').value = contract.owner;
-        DOM.elid('fund-airline-address').value = contract.owner;
-        DOM.elid('insurance-airline').value = contract.owner;
+        DOM.elid('airline-address').value = contract.airlines[1];
+        DOM.elid('fund-airline-address').value = contract.airlines[1];
+        DOM.elid('insurance-airline').value = contract.airlines[1];
         DOM.elid('insurance-flight').value = 'WAYNEAIR007';
 
         // Read transaction
@@ -40,7 +40,9 @@ import './flightsurety.css';
         })
         DOM.elid('fund-airline').addEventListener('click', () => {
           let airlineAddress = DOM.elid('fund-airline-address').value;
-          contract.fundAirline("10",(error, result) => {
+          let airlinefund = DOM.elid('airline-fund').value.toString();
+          let amountInWei = self.web3.utils.toWei(airlinefund, "ether").toString();
+          contract.fundAirline(airlineAddress,amountInWei,(error, result) => {
               display('', `Funds added`, [ { label: 'Funds added to airline: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
@@ -48,6 +50,7 @@ import './flightsurety.css';
         // register flight section
         DOM.elid('register-flight').addEventListener('click', () => {
           let flightnumber = DOM.elid('flight-nummber').value;
+
           contract.registerFlight(flightnumber, (error, result) => {
               display('', `Flight Registered`, [ { label: 'Register Flight Result: ', error: error, value: JSON.stringify(result)} ]);
           });
