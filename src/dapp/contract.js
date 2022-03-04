@@ -209,4 +209,16 @@ export default class Contract {
             callback(error, result);
         });
     }
+
+    getFlightStatus(flightname, callback) {
+      let self = this;
+      let payload = {
+          flight: flightname,
+          timestamp: Math.floor(Date.now() / 1000)
+      }
+
+      self.flightSuretyApp.methods
+          .getFlightStatus(payload.flight, payload.timestamp)
+          .call({from:this.owner}, callback);
+  }
 }

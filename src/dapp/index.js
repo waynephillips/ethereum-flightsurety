@@ -58,6 +58,16 @@ import './flightsurety.css';
           });
         })
 
+        DOM.elid('flight-status').addEventListener('click', () => {
+          //let airline = DOM.elid('status-airline').value;
+          let flight = DOM.elid('flight-number2').value;
+          //let timestamp = DOM.elid('status-timestamp').value;
+
+          contract.getFlightStatus(flight, (error, result) => {
+              console.log(error, result);
+              display('Flights', 'Retrive Flight Status Code', [ { label: 'Flight Status Code', error: error, value:'Status = ' + result}]);
+          })
+      })
         // buy insurance section
         DOM.elid('buy-insurance').addEventListener('click', () => {
           let airlineAddress = DOM.elid('insurance-airline').value;
