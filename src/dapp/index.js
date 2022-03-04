@@ -17,6 +17,8 @@ import './flightsurety.css';
         DOM.elid('fund-airline-address').value = contract.airlines[1];
         DOM.elid('insurance-airline').value = contract.airlines[1];
         DOM.elid('insurance-flight').value = 'WAYNEAIR007';
+        DOM.elid('oracle-airline').value = contract.airlines[1];
+
 
         // Read transaction
         contract.isOperational((error, result) => {
@@ -27,9 +29,11 @@ import './flightsurety.css';
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number2').value;
+            let oracleairline = DOM.elid('oracle-airline').value;
+
             // Write transaction
-            contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+            contract.fetchFlightStatus(oracleairline, flight, (error, result) => {
+                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result['flight'] + ' ' + result['status']} ]);
             });
         })
 
@@ -64,8 +68,7 @@ import './flightsurety.css';
           //let timestamp = DOM.elid('status-timestamp').value;
 
           contract.getFlightStatus(flight, (error, result) => {
-              console.log(error, result);
-              display('Flights', 'Retrive Flight Status Code', [ { label: 'Flight Status Code', error: error, value:'Status = ' + result}]);
+              display('Flights', 'Retrive Flight Status Code', [ { label: 'Flight Status Code', error: error, value:'Status = ' + result['timestamp']}]);
           })
       })
         // buy insurance section

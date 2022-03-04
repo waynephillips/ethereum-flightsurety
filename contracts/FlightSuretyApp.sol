@@ -141,7 +141,11 @@ contract FlightSuretyApp {
         require(flightSuretyData.isAirlineRegistered(msg.sender), "airline is not registered. cannot register flight at this time.");
         bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
         require(!flights[flightKey].isRegistered, "flight has already been registered.");
-        flights[flightKey] = Flight(true, STATUS_CODE_UNKNOWN, block.timestamp, msg.sender);
+        flights[flightKey] = Flight({
+          isRegistered : true,
+          statusCode : STATUS_CODE_UNKNOWN,
+          updatedTimestamp : _timestamp,
+          airline : msg.sender});
     }
 
    /**

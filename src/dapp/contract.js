@@ -64,13 +64,15 @@ export default class Contract {
             .isOperational()
             .call({ from: self.owner}, callback);
     }
-    fetchFlightStatus(flight, callback) {
+    fetchFlightStatus(airlineaddress, flight, callback) {
         let self = this;
+        let testDate = new Date('2022-03-01 10:30:00');
         let payload = {
-            airline: self.airlines[0],
+            airline: airlineaddress,
             flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
+            timestamp: Math.floor(testDate.getTime() / 1000)
         }
+        self.flightSuretyApp.events.FlightStatusInfo((error,event)=>callback(error, event.returnValues));
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {
@@ -132,10 +134,13 @@ export default class Contract {
     }
     registerFlight(flightNumber, callback) {
         let self = this;
+        let testDate = new Date('2022-03-01 10:30:00');
         let payload = {
             flight: flightNumber,
-            timestamp: Math.floor(Date.now() / 1000)
+            timestamp: Math.floor(testDate.getTime() / 1000)
         }
+
+        console.log("flight to register " + payload.flight + '  ' + payload.timestamp + ' ' + this.owner);
         self.flightSuretyApp.methods
             .registerFlight(payload.flight, payload.timestamp)
             .send({ from: this.owner,
@@ -211,13 +216,14 @@ export default class Contract {
 
     getFlightStatus(flightname, callback) {
       let self = this;
+      let testDate = new Date('2022-03-01 10:30:00');
       let payload = {
           flight: flightname,
-          timestamp: Math.floor(Date.now() / 1000)
+          timestamp: Math.floor(testDate.getTime() / 1000)
       }
-
+      console.log("get flight status " + " flight = " + payload.flight + ' ' + payload.timestamp);
       self.flightSuretyApp.methods
           .getFlightStatus(payload.flight, payload.timestamp)
-          .call({from:this.owner}, callback);
+          .call({ from: this.owner },callback);
   }
 }

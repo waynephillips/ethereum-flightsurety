@@ -19,7 +19,7 @@ let accounts = [];
 let oracles = [];
 
 function createRandomNumber() {
-  return Math.floor(Math.random() * 9);
+  return Math.random();
 }
 
 web3.eth.getAccounts((error, accounts) => {
@@ -35,7 +35,7 @@ web3.eth.getAccounts((error, accounts) => {
 
 flightSuretyApp.events.OracleRequest((error, event) => {
   if (error) console.log(error)
-  //console.log(event)
+  console.log(event)
   let flightstatus = STATUS_CODES.LATE_OTHER;
   let oraclresponse = createRandomNumber();
   if (oraclresponse <= 0.6) flightstatus = STATUS_CODES.ON_TIME;
@@ -48,6 +48,8 @@ flightSuretyApp.events.OracleRequest((error, event) => {
     flightSuretyApp.methods.getMyIndexes().call({from:oracles[i]}).then((index, error) => {
       for (let j=0; j<index.length; j++) {
         if (index[j] == event.returnValues.index) {
+          console.log("oracleresponse = " + oraclresponse);
+          console.log("status update " + flightstatus);
           flightSuretyApp.methods.submitOracleResponse(
             index[j],               // oracle index
             event.returnValues[1],  // airline
@@ -55,7 +57,7 @@ flightSuretyApp.events.OracleRequest((error, event) => {
             event.returnValues[3],  // timestamp
             flightstatus).send({
             from: oracles[i], gas: 5000000});
-          break;
+          //break;
         }
       }
     })
