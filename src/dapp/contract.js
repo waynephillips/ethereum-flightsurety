@@ -9,7 +9,6 @@ export default class Contract {
         let config = Config[network];
 
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-        //this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
         this.appContractAddress = config.appAddress;
