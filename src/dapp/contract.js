@@ -80,25 +80,32 @@ export default class Contract {
     }
     registerAirline(airlineaddress,airlinename,callback) {
         let self = this;
+
         let payload = {
               airline: airlineaddress,
               flight: airlinename,
               registered: false,
               statusmessage : ""
         }
+
         self.flightSuretyApp.methods
-            .registerAirline(payload.airline,payload.airlinename)
-            .send({ from: self.owner}, (error,result) => {
-                if (error) { callback (error,payload); }
+            .registerAirline(payload.airline,payload.flight)
+            .send({ from: self.owner,
+              gas: 5000000,
+              gasPrice: 20000000},
+               (error,result) => {
+              if (error) {
+                  console.log(error);
+                  callback (error,payload);
+                }
                 else {
-                  self.flightSuretyApp.methods
-                  .isAirlineRegistered(payload.airlineaddress).call({from: self.owner}, (error,result) => {
+                  self.flightSuretyData.methods
+                  .isAirlineRegistered(payload.airline).call({from: self.owner}, (error,result) => {
                         payload.statusmessage = "Airline has been registered";
                         payload.registered = true;
                         callback(error,payload);
                   })
                 }
-                callback(error,result);
             });
     }
     fundAirline(airlineaddress, amount, callback) {
@@ -115,14 +122,13 @@ export default class Contract {
             .send({ from: this.owner, value: payload.fund }, (error, result) => {
                 if (error) { callback (error,payload); }
                 else {
-                  self.flightSuretyApp.methods
-                  .isAirline(payload.airlineaddress).call({from: self.owner}, (error,result) => {
+                  self.flightSuretyData.methods
+                  .isAirline(payload.airline).call({from: self.owner}, (error,result) => {
                         payload.statusmessage = "Airline has funds, Registered and Avaliable to Vote";
                         payload.hasfunds = true;
                         callback(error,payload);
                   })
                 }
-                callback(error, result);
             });
     }
     registerFlight(flightNumber, callback) {
@@ -133,7 +139,9 @@ export default class Contract {
         }
         self.flightSuretyApp.methods
             .registerFlight(payload.flight, payload.timestamp)
-            .send({ from: this.owner }, (error, result) => {
+            .send({ from: this.owner,
+              gas: 5000000,
+              gasPrice: 20000000 }, (error, result) => {
                 callback(error, result);
             });
     }
@@ -163,16 +171,20 @@ export default class Contract {
     }
     buyInsurance(flightNumber, airlineaddress, amount, callback) {
         let self = this;
+
         let payload = {
             flight: flightNumber,
             airline: airlineaddress,
             amount: self.web3.utils.toWei(amount.toString(), "ether").toString(),
             timestamp: Math.floor(Date.now() / 1000)
         }
+        console.log(payload);
         self.flightSuretyData.methods
-            .buy(payload.airline,payload.flightNumber,payload.timestamp)
-            .send({ from: this.owner, value: payload.amount }, (error, result) => {
-                callback(error, payload);
+            .buy(payload.airline,payload.flight,payload.timestamp)
+            .send({ from: this.owner, value: payload.amount,
+              gas: 5000000,
+              gasPrice: 20000000 }, (error, result) => {
+                callback(error, result);
             });
     }
 
@@ -185,8 +197,8 @@ export default class Contract {
         }
         self.flightSuretyData.methods
             .getPassengerInsurancePayout(this.owner)
-            .call({ from: this.owner }, (error, result) => {
-                callback(error, result);
+            .call({ from: this.owner },(error,result) => {
+                callback(error,result);
             });
     }
     withdrawInsurancePayout(callback) {

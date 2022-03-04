@@ -226,7 +226,7 @@ contract FlightSuretyData {
         );
     }
 
-    function getPassengerInsurancePayout(address passenger) requireIsOperational public view returns (uint256 issurepayout) {
+    function getPassengerInsurancePayout(address passenger) requireIsOperational external view returns (uint256) {
         return (passengers[passenger].insurancePayout );
     }
     function getAirline(address airline) requireIsOperational public view returns (bool registered, bool hasfunds, string name, uint256 funds, uint numVotes,uint256 numairlines) {
@@ -302,7 +302,7 @@ contract FlightSuretyData {
       require(msg.sender == tx.origin, "Unauthorized Contract");
       bytes32 flightkey = getFlightKey(airline,flightCode,timestamp);
       // track passengers who bought insurance
-      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: 0, wallet: msg.sender, insurancePayoutComplete: false});
+      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: msg.value, wallet: msg.sender, insurancePayoutComplete: false});
 
       passengersWhoBoughtInsurance[flightkey].push(msg.sender);
       // track amount of insurance purchased for the flight
@@ -321,12 +321,14 @@ contract FlightSuretyData {
     {
       address passengerWallet;
       uint256 insuranceToBePaid;
-
+      uint256 passengerPaid;
       for (uint i = 0; i < passengersWhoBoughtInsurance[flightKey].length; i++) {
         passengerWallet = passengersWhoBoughtInsurance[flightKey][i];
-        insuranceToBePaid = amountInsuredForFlight[flightKey][i].mul(50);   // credit insuree 1.5x amount they paid for insurance.
+        // insuranceToBePaid = amountInsuredForFlight[flightKey][i].mul(50);   // credit insuree 1.5x amount they paid for insurance.
         delete passengersWhoBoughtInsurance[flightKey][i];                  // remove passenger from the array so that they can withdraw again.
-        amountInsuredForFlight[flightKey][i].sub(insuranceToBePaid);
+        //amountInsuredForFlight[flightKey][i].sub(insuranceToBePaid);
+        passengerPaid = passengers[passengerWallet].insurancePaid;
+        insuranceToBePaid = passengerPaid.mul(3).div(2);
         passengers[passengerWallet].insurancePayout = insuranceToBePaid;   // add payout to the passengers balance
         passengers[passengerWallet].insurancePayoutComplete = true;
       }
