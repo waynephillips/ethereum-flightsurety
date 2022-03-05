@@ -22,9 +22,7 @@ Dapp client
   - npm run dapp
   - http://localhost:8000
 - Capabilities
-  - Passenger Airline Choice:
-    - Passengers can choose from a fixed list of flight numbers and departures that are defined in the Dapp client
-    - UI has the following capabilities
+  - UI has the following capabilities
       - Fields for Airline Address and Airline Name
       - Amount of funds to send/which airline to send to
       - Ability to purchase flight insurance for no more than 1 ether

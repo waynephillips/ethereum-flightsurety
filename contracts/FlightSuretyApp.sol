@@ -132,20 +132,21 @@ contract FlightSuretyApp {
     */
     function registerFlight
                                 (
+                                  address airline,
                                   string _flight,
                                   uint256 _timestamp
                                 )
                                 external
                                 requireIsOperational
     {
-        require(flightSuretyData.isAirlineRegistered(msg.sender), "airline is not registered. cannot register flight at this time.");
-        bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
+        require(flightSuretyData.isAirlineRegistered(airline), "airline is not registered. cannot register flight at this time.");
+        bytes32 flightKey = getFlightKey(airline, _flight, _timestamp);
         require(!flights[flightKey].isRegistered, "flight has already been registered.");
         flights[flightKey] = Flight({
           isRegistered : true,
           statusCode : STATUS_CODE_UNKNOWN,
           updatedTimestamp : _timestamp,
-          airline : msg.sender});
+          airline : airline});
     }
 
    /**
@@ -165,27 +166,34 @@ contract FlightSuretyApp {
         // triggered by the oracle when a status is return
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         // update flight status
-        flights[flightKey].statusCode = statusCode;
-        flights[flightKey].updatedTimestamp = timestamp;
+        flights[flightKey] = Flight({
+          isRegistered : true,
+          statusCode : statusCode,
+          updatedTimestamp : timestamp,
+          airline :airline});
+
+        //flights[flightKey].statusCode = statusCode;
+       // flights[flightKey].updatedTimestamp = timestamp;
         // react to flight status = 20 and find passengers who purchased insurance
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyData.creditInsurees(flightKey);
         }
     }
 
-    function getFlightStatus(string flight, uint256 timestamp) external view returns (uint8) {
-            bytes32 flightKey = getFlightKey(msg.sender, flight, timestamp);
+    function getFlightStatus(address airline, string flight, uint256 timestamp) external view returns (uint8) {
+            bytes32 flightKey = getFlightKey(airline, flight, timestamp);
             return ( flights[flightKey].statusCode);
     }
 
     function fetchFlight(
+            address airline,
             string _flight,
             uint256 _timestamp) requireIsOperational
-            public
+            external
             view
-            returns (bool registered, uint8 status, uint256 timestamp, address airline)
+            returns (bool, uint8, uint256, address)
             {
-            bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
+            bytes32 flightKey = getFlightKey(airline, _flight, _timestamp);
             return ( flights[flightKey].isRegistered, flights[flightKey].statusCode, flights[flightKey].updatedTimestamp, flights[flightKey].airline);
     }
 
@@ -202,11 +210,7 @@ contract FlightSuretyApp {
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
-        oracleResponses[key] = ResponseInfo({
-                                                requester: msg.sender,
-                                                isOpen: true
-                                            });
-
+        oracleResponses[key] = ResponseInfo({requester: msg.sender, isOpen: true});
         emit OracleRequest(index, airline, flight, timestamp);
     }
 

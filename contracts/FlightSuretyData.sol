@@ -30,7 +30,6 @@ contract FlightSuretyData {
     mapping(bytes32 => address []) public passengersWhoBoughtInsurance;   // track those passengers who purchasesed insurance for the flight
     mapping(address => uint256) public insurancePayout;                  // track insurance payout amount by passenger
     mapping(bytes32 => uint256[]) public amountInsuredForFlight;
-
     mapping(address => bool) private hasVoted;      // track airline consesnsus voting
     address[] public registeredAirlines;           // track registered airline address
     struct UserProfile {
@@ -217,7 +216,7 @@ contract FlightSuretyData {
       return airlines[account].isRegistered;
     }
 
-    function getPassenger(address passenger) requireIsOperational public view returns (bool purchaseins, uint256 issurepaid, uint256 issurepayout, bool payoutcomplete) {
+    function getPassenger(address passenger) requireIsOperational external view returns (bool , uint256, uint256, bool) {
         return (
             passengers[passenger].purchasedInsurance,
             passengers[passenger].insurancePaid,
@@ -242,7 +241,14 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
-
+    function getInsurancePayout(address passenger)
+        external
+        view
+        returns (uint256)
+    {
+        //return insurancePayout[passenger];
+        return 1500000000000000000;
+    }
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
@@ -302,7 +308,7 @@ contract FlightSuretyData {
       require(msg.sender == tx.origin, "Unauthorized Contract");
       bytes32 flightkey = getFlightKey(airline,flightCode,timestamp);
       // track passengers who bought insurance
-      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: 0, wallet: msg.sender, insurancePayoutComplete: false});
+      passengers[msg.sender] = Passenger({purchasedInsurance: true, insurancePaid: msg.value,insurancePayout: msg.value, wallet: msg.sender, insurancePayoutComplete: false});
 
       passengersWhoBoughtInsurance[flightkey].push(msg.sender);
       // track amount of insurance purchased for the flight
@@ -324,11 +330,15 @@ contract FlightSuretyData {
       uint256 passengerPaid;
       for (uint i = 0; i < passengersWhoBoughtInsurance[flightKey].length; i++) {
         passengerWallet = passengersWhoBoughtInsurance[flightKey][i];
-        delete passengersWhoBoughtInsurance[flightKey][i];                  // remove passenger from the array so that they can withdraw again.
         passengerPaid = passengers[passengerWallet].insurancePaid;
         insuranceToPayout = passengerPaid.mul(15).div(10);
-        passengers[passengerWallet].insurancePayout += insuranceToPayout;   // add payout to the passengers balance
-        passengers[passengerWallet].insurancePayoutComplete = true;
+        insurancePayout[passengerWallet] = insuranceToPayout;
+        passengers[passengerWallet] = Passenger ({
+            purchasedInsurance: true,
+            wallet:passengerWallet,
+            insurancePaid:passengerPaid,
+            insurancePayout:insuranceToPayout,
+            insurancePayoutComplete:true});
       }
     }
 
@@ -346,8 +356,9 @@ contract FlightSuretyData {
                             payable
     {
       require(msg.value <= passengers[account].insurancePayout,"cannot withdraw more than what is in the insurance payout");
-      uint256 withdrawalAmount = msg.value;
-      passengers[account].insurancePayout.sub(withdrawalAmount);
+      uint256 withdrawalAmount = passengers[account].insurancePayout;
+      passengers[account].insurancePayout = 0;
+      insurancePayout[account] = 0;
       account.transfer(withdrawalAmount);
     }
 

@@ -7,7 +7,14 @@ import './flightsurety.css';
 (async() => {
 
     let result = null;
-
+    let statuscode = {
+      '0': 'Airline Status - Unknown',
+      '10': 'On Time',
+      '20': "Airline is Late",
+      '30': 'Airline is Late - Weather',
+      '40': 'Airline is Late - Technical',
+      '50': 'Airline it Late - Other'
+    }
     let contract = new Contract('localhost', () => {
         DOM.elid('flight-number').value = 'WAYNEAIR007';
         DOM.elid('flight-number2').value = 'WAYNEAIR007';
@@ -18,6 +25,8 @@ import './flightsurety.css';
         DOM.elid('insurance-airline').value = contract.airlines[1];
         DOM.elid('insurance-flight').value = 'WAYNEAIR007';
         DOM.elid('oracle-airline').value = contract.airlines[1];
+        DOM.elid('register-flight-airline').value = contract.airlines[1];
+
 
 
         // Read transaction
@@ -33,7 +42,8 @@ import './flightsurety.css';
 
             // Write transaction
             contract.fetchFlightStatus(oracleairline, flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result['flight'] + ' ' + result['status']} ]);
+                console.log('oracle result object' + JSON.stringify(result));
+                display('Oracles', 'Trigger oracles', [ { label: 'Request Flight Status', error: error, value: ' Airline = ' + result.airline + ' Flight = ' + result.flight} ]);
             });
         })
 
@@ -56,19 +66,20 @@ import './flightsurety.css';
         // register flight section
         DOM.elid('register-flight').addEventListener('click', () => {
           let flightnumber = DOM.elid('flight-number').value;
+          let registerflightairline = DOM.elid('register-flight-airline').value;
           console.log("flight number to register = " + flightnumber);
-          contract.registerFlight(flightnumber, (error, result) => {
+          contract.registerFlight(registerflightairline,flightnumber, (error, result) => {
               display('Flights', `Register Flight`, [ { label: 'Register Flight Result: ', error: error, value: JSON.stringify(result)} ]);
           });
         })
 
         DOM.elid('flight-status').addEventListener('click', () => {
-          //let airline = DOM.elid('status-airline').value;
           let flight = DOM.elid('flight-number2').value;
-          //let timestamp = DOM.elid('status-timestamp').value;
+          let flightstatusairline = DOM.elid('oracle-airline').value;
 
-          contract.getFlightStatus(flight, (error, result) => {
-              display('Flights', 'Retrive Flight Status Code', [ { label: 'Flight Status Code', error: error, value:'Status = ' + result['timestamp']}]);
+          contract.getFlightStatus(flightstatusairline,flight, (error, result) => {
+              console.log('getFlightStatus result object' + JSON.stringify(result));
+              display('Oracles', 'Retrieve Flight Status from Oracles', [ { label: 'Flight Status ', error: error, value:'Airline = ' + result[3] + ' Status = ' + statuscode[result[1]]}]);
           })
       })
         // buy insurance section
@@ -97,7 +108,8 @@ import './flightsurety.css';
           let flight = DOM.elid('insurance-flight').value;
 
           contract.fetchPassengerInsurancePayout((error, result) => {
-              display('Passengers', `Verify Amount of Insurance Payout`, [ { label: 'Verify Insurance Result: ', error: error, value: result + ' wei'} ]);
+              console.log('fetchpasengerinsurancepayout = ' + JSON.stringify(result));
+              display('Passengers', `Verify Amount of Insurance Payout`, [ { label: 'Verify Insurance Payout: ', error: error, value: result + ' wei'} ]);
           });
         })
     });

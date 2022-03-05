@@ -72,7 +72,6 @@ export default class Contract {
             flight: flight,
             timestamp: Math.floor(testDate.getTime() / 1000)
         }
-        self.flightSuretyApp.events.FlightStatusInfo((error,event)=>callback(error, event.returnValues));
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {
@@ -86,7 +85,8 @@ export default class Contract {
               airline: airlineaddress,
               flight: airlinename,
               registered: false,
-              statusmessage : ""
+              statusmessage : "",
+              transaction: ""
         }
 
         self.flightSuretyApp.methods
@@ -104,6 +104,7 @@ export default class Contract {
                   .isAirlineRegistered(payload.airline).call({from: self.owner}, (error,result) => {
                         payload.statusmessage = "Airline has been registered";
                         payload.registered = true;
+                        payload.transaction = result;
                         callback(error,payload);
                   })
                 }
@@ -132,17 +133,16 @@ export default class Contract {
                 }
             });
     }
-    registerFlight(flightNumber, callback) {
+    registerFlight(airlineaddress, flightNumber, callback) {
         let self = this;
         let testDate = new Date('2022-03-01 10:30:00');
         let payload = {
+            airline: airlineaddress,
             flight: flightNumber,
             timestamp: Math.floor(testDate.getTime() / 1000)
         }
-
-        console.log("flight to register " + payload.flight + '  ' + payload.timestamp + ' ' + this.owner);
         self.flightSuretyApp.methods
-            .registerFlight(payload.flight, payload.timestamp)
+            .registerFlight(payload.airline, payload.flight, payload.timestamp)
             .send({ from: this.owner,
               gas: 5000000,
               gasPrice: 20000000 }, (error, result) => {
@@ -165,11 +165,11 @@ export default class Contract {
       //contractInstance.methods.getIdentifier().call().then (x => {/* use x here */});
         let self = this;
         let payload = {
-          passenger: this.owner
+          passenger: this.passengers[0]
         }
         self.flightSuretyData.methods
-            .getPassenger(this.owner)
-            .send({ from: this.owner }, (error, result) => {
+            .getPassenger(this.passengers[0])
+            .send({ from: this.passengers[0] }, (error, result) => {
                 callback(error, result);
             });
     }
@@ -185,7 +185,7 @@ export default class Contract {
         console.log(payload);
         self.flightSuretyData.methods
             .buy(payload.airline,payload.flight,payload.timestamp)
-            .send({ from: this.owner, value: payload.amount,
+            .send({ from: this.passengers[0], value: payload.amount,
               gas: 5000000,
               gasPrice: 20000000 }, (error, result) => {
                 callback(error, result);
@@ -195,35 +195,37 @@ export default class Contract {
     fetchPassengerInsurancePayout(callback) {
         let self = this;
         let payload = {
-          passenger: this.owner,
-          statusmessage: "",
-          insurancepayout: 0
+          passenger: this.passengers[0],
         }
+        //.getPassengerInsurancePayout(this.passengers[0])
+        console.log('getInsurancePayout ' + payload.passenger);
         self.flightSuretyData.methods
-            .getPassengerInsurancePayout(this.owner)
-            .call({ from: this.owner },(error,result) => {
+            .getInsurancePayout(this.passengers[0])
+            .call({ from: this.passengers[0] },(error,result) => {
                 callback(error,result);
             });
     }
     withdrawInsurancePayout(callback) {
         let self = this;
         self.flightSuretyData.methods
-          .pay(this.owner)
-          .send({ from: this.owner }, (error, result) => {
+          .pay(this.passengers[0])
+          .send({ from: this.passengers[0] }, (error, result) => {
             callback(error, result);
         });
     }
 
-    getFlightStatus(flightname, callback) {
+    getFlightStatus(airlineaddress, flightname, callback) {
       let self = this;
       let testDate = new Date('2022-03-01 10:30:00');
       let payload = {
+          airline: airlineaddress,
           flight: flightname,
           timestamp: Math.floor(testDate.getTime() / 1000)
       }
-      console.log("get flight status " + " flight = " + payload.flight + ' ' + payload.timestamp);
       self.flightSuretyApp.methods
-          .getFlightStatus(payload.flight, payload.timestamp)
-          .call({ from: this.owner },callback);
-  }
+          .fetchFlight(payload.airline, payload.flight, payload.timestamp)
+          .call({ from: self.owner },(error, result) => {
+            callback(error, result);
+          });
+    }
 }

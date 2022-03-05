@@ -33,9 +33,18 @@ web3.eth.getAccounts((error, accounts) => {
     ));
 }});
 
+flightSuretyApp.events.FlightStatusInfo((error,event) => {
+  console.log("FlightStatusInfo event : flight = " +  event.returnValues.flight + ' status = ' + event.returnValues.status);
+});
+
 flightSuretyApp.events.OracleRequest((error, event) => {
   if (error) console.log(error)
-  console.log(event)
+  console.log('OracleRequest Event : ' + event);
+  // extract event data for contract call
+  let { index, airline, flight, timestamp } = event.returnValues;
+  console.log('=================================================');
+  console.log(`[IncomingRequest] index=${index}, airline=${airline}, flight=${flight}, timestamp=${timestamp}`);
+
   let flightstatus = STATUS_CODES.LATE_OTHER;
   let oraclresponse = createRandomNumber();
   if (oraclresponse <= 0.6) flightstatus = STATUS_CODES.ON_TIME;
@@ -48,23 +57,21 @@ flightSuretyApp.events.OracleRequest((error, event) => {
     flightSuretyApp.methods.getMyIndexes().call({from:oracles[i]}).then((index, error) => {
       for (let j=0; j<index.length; j++) {
         if (index[j] == event.returnValues.index) {
-          console.log("oracleresponse = " + oraclresponse);
-          console.log("status update " + flightstatus);
           flightSuretyApp.methods.submitOracleResponse(
-            index[j],               // oracle index
-            event.returnValues[1],  // airline
-            event.returnValues[2],  // flight
-            event.returnValues[3],  // timestamp
+            event.returnValues.index,
+            event.returnValues.airline,
+            event.returnValues.flight,
+            event.returnValues.timestamp,
             flightstatus).send({
-            from: oracles[i], gas: 5000000});
+            from: oracles[i], gas: 5000000},(error, result)=>{
+              if (error) console.log(error);
+            });
           //break;
         }
       }
     })
   }
 });
-
-//registerOracles();
 
 const app = express();
 app.get('/api', (req, res) => {
